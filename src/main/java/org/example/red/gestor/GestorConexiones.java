@@ -14,7 +14,7 @@ public class GestorConexiones {
     private final List<ClienteConectado> clientes;
 
     public GestorConexiones() {
-        clientes = new ArrayList<>();
+        clientes = new ArrayList<ClienteConectado>();
     }
 
     public synchronized ClienteConectado registrarCliente(
@@ -28,38 +28,23 @@ public class GestorConexiones {
             return existente;
         }
 
-        if (cantidadClientes() >= MAX_JUGADORES) {
+        if (clientes.size() >= MAX_JUGADORES) {
             return null;
         }
 
-        int id = 1;
-
-        while (buscarCliente(id) != null) {
-            id++;
-        }
+        int id = clientes.size() + 1;
 
         ClienteConectado nuevo = new ClienteConectado(
-                id, ip, puerto
+                id,
+                ip,
+                puerto
         );
 
         clientes.add(nuevo);
 
-        System.out.println(
-                "Jugador " + id + " conectado: " + ip
-        );
+        System.out.println("Jugador " + id + " conectado: " + ip);
 
         return nuevo;
-    }
-
-    public synchronized ClienteConectado buscarCliente(int id) {
-
-        for (ClienteConectado cliente : clientes) {
-            if (cliente.getId() == id && cliente.isConectado()) {
-                return cliente;
-            }
-        }
-
-        return null;
     }
 
     public synchronized ClienteConectado buscarCliente(
@@ -67,9 +52,11 @@ public class GestorConexiones {
             int puerto) {
 
         for (ClienteConectado cliente : clientes) {
-            if (cliente.isConectado()
-                    && cliente.getDireccionIP().equals(ip)
-                    && cliente.getPuerto() == puerto) {
+
+            if (cliente.getDireccionIP().equals(ip)
+                    && cliente.getPuerto() == puerto
+                    && cliente.isConectado()) {
+
                 return cliente;
             }
         }
@@ -77,24 +64,20 @@ public class GestorConexiones {
         return null;
     }
 
-    public synchronized boolean eliminarCliente(
-            InetAddress ip,
-            int puerto) {
+    public synchronized ClienteConectado buscarCliente(int id) {
 
-        ClienteConectado cliente = buscarCliente(ip, puerto);
+        for (ClienteConectado cliente : clientes) {
 
-        if (cliente == null) {
-            return false;
+            if (cliente.getId() == id) {
+                return cliente;
+            }
         }
 
-        cliente.desconectar();
-        clientes.remove(cliente);
-
-        return true;
+        return null;
     }
 
     public synchronized List<ClienteConectado> getClientes() {
-        return new ArrayList<>(clientes);
+        return new ArrayList<ClienteConectado>(clientes);
     }
 
     public synchronized int cantidadClientes() {
@@ -103,5 +86,42 @@ public class GestorConexiones {
 
     public synchronized boolean partidaCompleta() {
         return clientes.size() == MAX_JUGADORES;
+    }
+
+    public synchronized boolean todosListos() {
+
+        if (!partidaCompleta()) {
+            return false;
+        }
+
+        for (ClienteConectado cliente : clientes) {
+
+            if (!cliente.isListo()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public synchronized void eliminarTodos() {
+
+        for (ClienteConectado cliente : clientes) {
+            cliente.desconectar();
+        }
+
+        clientes.clear();
+
+        System.out.println("Todos los jugadores fueron eliminados.");
+    }
+
+    public synchronized void eliminarCliente(int id) {
+
+        ClienteConectado cliente = buscarCliente(id);
+
+        if (cliente != null) {
+            cliente.desconectar();
+            clientes.remove(cliente);
+        }
     }
 }

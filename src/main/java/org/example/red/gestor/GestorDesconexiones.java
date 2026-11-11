@@ -13,7 +13,8 @@ public class GestorDesconexiones {
     public List<ClienteConectado> detectarDesconexiones(
             GestorConexiones gestor) {
 
-        List<ClienteConectado> desconectados = new ArrayList<>();
+        List<ClienteConectado> desconectados =
+                new ArrayList<ClienteConectado>();
 
         long tiempoActual = System.currentTimeMillis();
 

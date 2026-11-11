@@ -5,76 +5,36 @@ import org.example.red.modelo.ClienteConectado;
 
 public class GestorLobby {
 
-    private boolean partidaIniciada = false;
-    private boolean partidaFinalizada = false;
+    private final GestorConexiones gestorConexiones;
 
-    public synchronized boolean marcarListo(
-            ClienteConectado cliente,
-            boolean listo) {
-
-        if (partidaIniciada || partidaFinalizada) {
-            return false;
-        }
-
-        cliente.setListo(listo);
-
-        return true;
+    public GestorLobby(GestorConexiones gestorConexiones) {
+        this.gestorConexiones = gestorConexiones;
     }
 
-    public synchronized boolean todosListos(
-            GestorConexiones gestor) {
+    public synchronized boolean marcarListo(int id) {
 
-        if (partidaIniciada || partidaFinalizada) {
+        ClienteConectado cliente =
+                gestorConexiones.buscarCliente(id);
+
+        if (cliente == null) {
             return false;
         }
 
-        if (!gestor.partidaCompleta()) {
-            return false;
-        }
+        cliente.setListo(true);
 
-        for (ClienteConectado cliente : gestor.getClientes()) {
+        System.out.println(
+                "Jugador " + id + " está listo."
+        );
 
-            if (!cliente.estaListo()) {
-                return false;
-            }
-        }
-
-        return true;
+        return gestorConexiones.todosListos();
     }
 
-    public synchronized boolean iniciarPartida(
-            GestorConexiones gestor) {
+    public synchronized void reiniciar() {
 
-        if (!todosListos(gestor)) {
-            return false;
-        }
+        for (ClienteConectado cliente :
+                gestorConexiones.getClientes()) {
 
-        partidaIniciada = true;
-
-        return true;
-    }
-
-    public synchronized void reiniciarConfirmaciones(
-            GestorConexiones gestor) {
-
-        for (ClienteConectado cliente : gestor.getClientes()) {
             cliente.setListo(false);
         }
-    }
-
-    public synchronized void finalizarPartida() {
-        partidaFinalizada = true;
-    }
-
-    public synchronized boolean estaIniciada() {
-        return partidaIniciada;
-    }
-
-    public synchronized boolean estaFinalizada() {
-        return partidaFinalizada;
-    }
-
-    public synchronized boolean estaEnLobby() {
-        return !partidaIniciada && !partidaFinalizada;
     }
 }

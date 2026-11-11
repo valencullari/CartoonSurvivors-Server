@@ -9,9 +9,10 @@ public class ClienteConectado {
     private final InetAddress direccionIP;
     private final int puerto;
 
-    private volatile long ultimoMensaje;
-    private volatile boolean conectado;
-    private volatile boolean listo;
+    private long ultimoMensaje;
+
+    private boolean conectado;
+    private boolean listo;
 
     public ClienteConectado(
             int id,
@@ -23,6 +24,7 @@ public class ClienteConectado {
         this.puerto = puerto;
 
         this.ultimoMensaje = System.currentTimeMillis();
+
         this.conectado = true;
         this.listo = false;
     }
@@ -39,16 +41,16 @@ public class ClienteConectado {
         return puerto;
     }
 
+    public long getUltimoMensaje() {
+        return ultimoMensaje;
+    }
+
     public boolean isConectado() {
         return conectado;
     }
 
-    public boolean estaListo() {
+    public boolean isListo() {
         return listo;
-    }
-
-    public long getUltimoMensaje() {
-        return ultimoMensaje;
     }
 
     public void actualizarActividad() {
