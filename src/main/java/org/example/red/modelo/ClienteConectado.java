@@ -1,5 +1,5 @@
 
-package org.example.red;
+package org.example.red.modelo;
 
 import java.net.InetAddress;
 
@@ -9,9 +9,9 @@ public class ClienteConectado {
     private final InetAddress direccionIP;
     private final int puerto;
 
-    private long ultimoMensaje;
-
-    private boolean conectado;
+    private volatile long ultimoMensaje;
+    private volatile boolean conectado;
+    private volatile boolean listo;
 
     public ClienteConectado(
             int id,
@@ -24,6 +24,7 @@ public class ClienteConectado {
 
         this.ultimoMensaje = System.currentTimeMillis();
         this.conectado = true;
+        this.listo = false;
     }
 
     public int getId() {
@@ -42,19 +43,24 @@ public class ClienteConectado {
         return conectado;
     }
 
-    public void actualizarActividad() {
-        ultimoMensaje = System.currentTimeMillis();
+    public boolean estaListo() {
+        return listo;
     }
 
     public long getUltimoMensaje() {
         return ultimoMensaje;
     }
 
-    public boolean estaInactivo(long tiempoMaximo) {
-        return System.currentTimeMillis() - ultimoMensaje > tiempoMaximo;
+    public void actualizarActividad() {
+        ultimoMensaje = System.currentTimeMillis();
+    }
+
+    public void setListo(boolean listo) {
+        this.listo = listo;
     }
 
     public void desconectar() {
         conectado = false;
+        listo = false;
     }
 }
