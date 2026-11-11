@@ -1,7 +1,6 @@
 
 package org.example.red;
 
-
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,13 +31,19 @@ public class GestorConexiones {
             }
         }
 
-        // Comprobar límite de jugadores
-        if (clientes.size() >= MAX_JUGADORES) {
+        // Comprobar cantidad de jugadores conectados
+        if (cantidadClientes() >= MAX_JUGADORES) {
             return null;
         }
 
         // Buscar identificador disponible
-        int id = clientes.size() + 1;
+        int id = 1;
+
+        while (buscarCliente(id) != null
+                && buscarCliente(id).isConectado()) {
+
+            id++;
+        }
 
         ClienteConectado nuevoCliente =
                 new ClienteConectado(id, ip, puerto);
@@ -56,7 +61,7 @@ public class GestorConexiones {
 
         for (ClienteConectado cliente : clientes) {
 
-            if (cliente.getId() == id) {
+            if (cliente.getId() == id && cliente.isConectado()) {
                 return cliente;
             }
         }
@@ -64,24 +69,8 @@ public class GestorConexiones {
         return null;
     }
 
-
-
-
-    public synchronized List<ClienteConectado> getClientes() {
-        return new ArrayList<>(clientes);
-    }
-
-    public synchronized int cantidadClientes() {
-        return clientes.size();
-    }
-
-    public synchronized boolean partidaCompleta() {
-        return clientes.size() == MAX_JUGADORES;
-    }
-
-
     public synchronized ClienteConectado buscarCliente(
-            java.net.InetAddress ip,
+            InetAddress ip,
             int puerto) {
 
         for (ClienteConectado cliente : clientes) {
@@ -97,4 +86,43 @@ public class GestorConexiones {
         return null;
     }
 
+    public synchronized List<ClienteConectado> getClientes() {
+        return new ArrayList<>(clientes);
+    }
+
+    public synchronized int cantidadClientes() {
+
+        int cantidad = 0;
+
+        for (ClienteConectado cliente : clientes) {
+
+            if (cliente.isConectado()) {
+                cantidad++;
+            }
+        }
+
+        return cantidad;
+    }
+
+    public synchronized boolean partidaCompleta() {
+        return cantidadClientes() == MAX_JUGADORES;
+    }
+
+    public synchronized List<ClienteConectado> detectarDesconectados(
+            long tiempoMaximo) {
+
+        List<ClienteConectado> desconectados = new ArrayList<>();
+
+        for (ClienteConectado cliente : clientes) {
+
+            if (cliente.isConectado()
+                    && cliente.estaInactivo(tiempoMaximo)) {
+
+                cliente.desconectar();
+                desconectados.add(cliente);
+            }
+        }
+
+        return desconectados;
+    }
 }

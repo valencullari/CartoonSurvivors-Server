@@ -50,6 +50,10 @@ public class ClienteConectado {
         return ultimoMensaje;
     }
 
+    public boolean estaInactivo(long tiempoMaximo) {
+        return System.currentTimeMillis() - ultimoMensaje > tiempoMaximo;
+    }
+
     public void desconectar() {
         conectado = false;
     }

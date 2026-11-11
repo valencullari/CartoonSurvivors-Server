@@ -6,14 +6,21 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public class ServidorUDP {
+
+    private static final long TIEMPO_MAXIMO = 6000;
 
     private final int puerto;
     private DatagramSocket socket;
 
     private final GestorConexiones gestorConexiones;
+
+    private boolean partidaIniciada = false;
+    private boolean partidaFinalizada = false;
 
     public ServidorUDP(int puerto) {
         this.puerto = puerto;
@@ -25,33 +32,42 @@ public class ServidorUDP {
         try {
 
             socket = new DatagramSocket(puerto);
+            socket.setSoTimeout(1000);
 
             System.out.println("Servidor iniciado.");
             System.out.println("Escuchando en el puerto: " + puerto);
 
             while (!socket.isClosed()) {
 
-                byte[] buffer = new byte[1024];
+                try {
 
-                DatagramPacket paqueteRecibido =
-                        new DatagramPacket(buffer, buffer.length);
+                    byte[] buffer = new byte[1024];
 
-                socket.receive(paqueteRecibido);
+                    DatagramPacket paqueteRecibido =
+                            new DatagramPacket(buffer, buffer.length);
 
-                String mensaje = new String(
-                        paqueteRecibido.getData(),
-                        0,
-                        paqueteRecibido.getLength(),
-                        StandardCharsets.UTF_8
-                ).trim();
+                    socket.receive(paqueteRecibido);
 
-                System.out.println(
-                        "Mensaje recibido: " + mensaje
-                                + " desde "
-                                + paqueteRecibido.getAddress()
-                );
+                    String mensaje = new String(
+                            paqueteRecibido.getData(),
+                            0,
+                            paqueteRecibido.getLength(),
+                            StandardCharsets.UTF_8
+                    ).trim();
 
-                procesarMensaje(mensaje, paqueteRecibido);
+                    System.out.println(
+                            "Mensaje recibido: " + mensaje
+                                    + " desde "
+                                    + paqueteRecibido.getAddress()
+                    );
+
+                    procesarMensaje(mensaje, paqueteRecibido);
+
+                } catch (SocketTimeoutException e) {
+                    // No llegó ningún paquete.
+                }
+
+                revisarDesconexiones();
             }
 
         } catch (SocketException e) {
@@ -76,36 +92,46 @@ public class ServidorUDP {
             String mensaje,
             DatagramPacket paqueteRecibido) {
 
+        InetAddress ip = paqueteRecibido.getAddress();
+        int puertoCliente = paqueteRecibido.getPort();
+
         switch (mensaje) {
 
-            // El cliente busca servidores mediante Broadcast
             case Protocolo.BUSCAR_SERVIDOR:
 
                 enviarRespuesta(
                         Protocolo.SERVIDOR_ENCONTRADO,
-                        paqueteRecibido.getAddress(),
-                        paqueteRecibido.getPort()
+                        ip,
+                        puertoCliente
                 );
 
                 System.out.println("Servidor encontrado por un cliente.");
 
                 break;
 
-            // El cliente solicita conectarse
             case Protocolo.CONECTAR:
 
+                if (partidaFinalizada) {
+
+                    // No permitir entrar a una partida ya finalizada.
+                    enviarRespuesta(
+                            Protocolo.PARTIDA_FINALIZADA,
+                            ip,
+                            puertoCliente
+                    );
+
+                    break;
+                }
+
                 ClienteConectado cliente =
-                        gestorConexiones.registrarCliente(
-                                paqueteRecibido.getAddress(),
-                                paqueteRecibido.getPort()
-                        );
+                        gestorConexiones.registrarCliente(ip, puertoCliente);
 
                 if (cliente == null) {
 
                     enviarRespuesta(
                             Protocolo.SERVIDOR_LLENO,
-                            paqueteRecibido.getAddress(),
-                            paqueteRecibido.getPort()
+                            ip,
+                            puertoCliente
                     );
 
                 } else {
@@ -124,30 +150,41 @@ public class ServidorUDP {
                             "Jugador registrado: " + cliente.getId()
                     );
 
-                    if (gestorConexiones.partidaCompleta()) {
+                    if (gestorConexiones.partidaCompleta()
+                            && !partidaIniciada) {
+
                         iniciarPartida();
                     }
                 }
 
                 break;
 
-            // El cliente avisa que se desconecta
+            case Protocolo.KEEP_ALIVE:
+
+                ClienteConectado clienteActivo =
+                        gestorConexiones.buscarCliente(ip, puertoCliente);
+
+                if (clienteActivo != null) {
+                    clienteActivo.actualizarActividad();
+                }
+
+                break;
+
             case Protocolo.DESCONECTAR:
 
                 ClienteConectado desconectado =
-                        gestorConexiones.buscarCliente(
-                                paqueteRecibido.getAddress(),
-                                paqueteRecibido.getPort()
-                        );
+                        gestorConexiones.buscarCliente(ip, puertoCliente);
 
                 if (desconectado != null) {
 
                     desconectado.desconectar();
 
                     System.out.println(
-                            "Jugador desconectado: "
-                                    + desconectado.getId()
+                            "Jugador " + desconectado.getId()
+                                    + " desconectado normalmente."
                     );
+
+                    finalizarPorDesconexion(desconectado);
                 }
 
                 break;
@@ -164,17 +201,63 @@ public class ServidorUDP {
 
     private void iniciarPartida() {
 
+        partidaIniciada = true;
+
         System.out.println("Los dos jugadores están conectados.");
         System.out.println("Iniciando partida...");
 
         for (ClienteConectado cliente :
                 gestorConexiones.getClientes()) {
 
-            enviarRespuesta(
-                    Protocolo.EMPIEZA,
-                    cliente.getDireccionIP(),
-                    cliente.getPuerto()
+            if (cliente.isConectado()) {
+
+                enviarRespuesta(
+                        Protocolo.EMPIEZA,
+                        cliente.getDireccionIP(),
+                        cliente.getPuerto()
+                );
+            }
+        }
+    }
+
+    private void revisarDesconexiones() {
+
+        List<ClienteConectado> desconectados =
+                gestorConexiones.detectarDesconectados(TIEMPO_MAXIMO);
+
+        for (ClienteConectado cliente : desconectados) {
+
+            System.out.println(
+                    "Jugador " + cliente.getId()
+                            + " desconectado inesperadamente."
             );
+
+            finalizarPorDesconexion(cliente);
+        }
+    }
+
+    private void finalizarPorDesconexion(
+            ClienteConectado desconectado) {
+
+        if (!partidaIniciada || partidaFinalizada) {
+            return;
+        }
+
+        partidaFinalizada = true;
+
+        System.out.println("Partida finalizada por desconexión.");
+
+        for (ClienteConectado cliente :
+                gestorConexiones.getClientes()) {
+
+            if (cliente.isConectado()) {
+
+                enviarRespuesta(
+                        Protocolo.OTRO_JUGADOR_DESCONECTADO,
+                        cliente.getDireccionIP(),
+                        cliente.getPuerto()
+                );
+            }
         }
     }
 
