@@ -29,6 +29,16 @@ public class GestorLobby {
         return gestorConexiones.todosListos();
     }
 
+    public synchronized void desmarcarListo(int id) {
+
+        ClienteConectado cliente =
+                gestorConexiones.buscarCliente(id);
+
+        if (cliente != null) {
+            cliente.setListo(false);
+        }
+    }
+
     public synchronized void reiniciar() {
 
         for (ClienteConectado cliente :

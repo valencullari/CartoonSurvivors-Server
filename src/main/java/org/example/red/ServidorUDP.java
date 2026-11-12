@@ -1,5 +1,6 @@
 package org.example.red;
 
+import org.example.juego.GestorPartida;
 import org.example.red.gestor.*;
 import org.example.red.modelo.*;
 import org.example.red.protocolo.Protocolo;
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
 
 public class ServidorUDP {
 
@@ -19,6 +21,11 @@ public class ServidorUDP {
     private final GestorLobby gestorLobby;
     private final GestorDesconexiones gestorDesconexiones;
     private final ControladorPartida controladorPartida;
+    private final GestorPartida gestorPartida;
+    private Thread hiloEstados;
+    private boolean enviandoEstados = false;
+    private long secuenciaEstado = 0;
+
 
     private volatile boolean ejecutando;
 
@@ -26,6 +33,7 @@ public class ServidorUDP {
 
         this.puerto = puerto;
 
+        gestorPartida = new GestorPartida();
         gestorConexiones = new GestorConexiones();
         gestorLobby = new GestorLobby(gestorConexiones);
         gestorDesconexiones = new GestorDesconexiones();
@@ -70,7 +78,8 @@ public class ServidorUDP {
             }
 
         } finally {
-
+            detenerEnvioEstados();
+            gestorPartida.detenerPartida();
             if (socket != null && !socket.isClosed()) {
                 socket.close();
             }
@@ -82,7 +91,9 @@ public class ServidorUDP {
         InetAddress ip = paquete.getAddress();
         int puertoCliente = paquete.getPort();
 
-        if (!mensaje.equals(Protocolo.KEEP_ALIVE)) {
+        if (!mensaje.equals(Protocolo.KEEP_ALIVE)
+                && !mensaje.startsWith(Protocolo.MOVER + "|")) {
+
             System.out.println(
                     "Mensaje recibido: " + mensaje + " desde " + ip
             );
@@ -99,6 +110,17 @@ public class ServidorUDP {
             } else {
                 System.out.println("Formato de selección de personaje inválido.");
             }
+
+            return;
+        }
+
+        if (mensaje.startsWith(Protocolo.MOVER + "|")) {
+
+            procesarMovimiento(
+                    mensaje,
+                    ip,
+                    puertoCliente
+            );
 
             return;
         }
@@ -128,6 +150,12 @@ public class ServidorUDP {
             case Protocolo.LISTO:
 
                 marcarListo(ip, puertoCliente);
+
+                break;
+
+            case Protocolo.NO_LISTO:
+
+                desmarcarListo(ip, puertoCliente);
 
                 break;
 
@@ -188,6 +216,66 @@ public class ServidorUDP {
     }
 
 
+    private synchronized void procesarMovimiento(
+            String mensaje,
+            InetAddress ip,
+            int puertoCliente) {
+
+        // Solo permitir movimiento durante la partida.
+        if (controladorPartida.getEstado()
+                != EstadoPartida.EN_CURSO) {
+            return;
+        }
+
+        // Identificar al jugador que envió el paquete.
+        ClienteConectado cliente =
+                gestorConexiones.buscarCliente(
+                        ip,
+                        puertoCliente
+                );
+
+        if (cliente == null) {
+            return;
+        }
+
+        // Ejemplo: MOVER|1|0
+        String[] partes = mensaje.split("\\|", -1);
+
+        if (partes.length != 3) {
+            return;
+        }
+
+        try {
+
+            float direccionX =
+                    Float.parseFloat(partes[1]);
+
+            float direccionY =
+                    Float.parseFloat(partes[2]);
+
+            if (!Float.isFinite(direccionX)
+                    || !Float.isFinite(direccionY)) {
+                return;
+            }
+
+            // Actualizar la actividad del cliente.
+            cliente.actualizarActividad();
+
+            // Enviar el movimiento a la partida.
+            gestorPartida.moverJugador(
+                    cliente.getId(),
+                    direccionX,
+                    direccionY
+            );
+
+        } catch (NumberFormatException e) {
+
+            System.out.println(
+                    "Movimiento invalido: " + mensaje
+            );
+        }
+    }
+
     private synchronized void seleccionarPersonaje(InetAddress ip, int puertoCliente, String personaje) {
 
         // Solo se puede seleccionar mientras
@@ -238,6 +326,65 @@ public class ServidorUDP {
     }
 
 
+    private synchronized void iniciarEnvioEstados() {
+
+        if (enviandoEstados) {
+            return;
+        }
+
+        enviandoEstados = true;
+        secuenciaEstado = 0;
+
+        hiloEstados = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+
+                while (estaEnviandoEstados()) {
+
+                    // Guardar el momento de inicio.
+                    long inicio = System.nanoTime();
+
+                    // Enviar posiciones de los jugadores.
+                    enviarEstadoJugadores();
+
+                    // Calcular cuánto tardó el envío.
+                    long duracion = System.nanoTime() - inicio;
+
+                    // Queremos un envío cada 33,33 ms.
+                    long intervalo = 1_000_000_000L / 30;
+
+                    long tiempoRestante = intervalo - duracion;
+
+                    try {
+
+                        if (tiempoRestante > 0) {
+
+                            long milisegundos = tiempoRestante / 1_000_000;
+
+                            int nanosegundos = (int) (tiempoRestante % 1_000_000);
+
+                            Thread.sleep(milisegundos, nanosegundos);
+                        }
+
+                    } catch (InterruptedException e) {
+
+                        // Detener el hilo al finalizar la partida.
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+
+        }, "HiloEnvioEstados");
+
+        hiloEstados.setDaemon(true);
+        hiloEstados.start();
+
+        System.out.println("Envio de estados iniciado a 30 Hz.");
+    }
+
+
     private synchronized void notificarPersonajes() {
 
         StringBuilder mensaje = new StringBuilder(Protocolo.PERSONAJES);
@@ -254,6 +401,25 @@ public class ServidorUDP {
         }
 
         notificarJugadores(mensaje.toString());
+    }
+
+    private synchronized void desmarcarListo(
+            InetAddress ip,
+            int puertoCliente) {
+
+        if (controladorPartida.getEstado()
+                != EstadoPartida.LOBBY) {
+            return;
+        }
+
+        ClienteConectado cliente =
+                gestorConexiones.buscarCliente(ip, puertoCliente);
+
+        if (cliente == null) {
+            return;
+        }
+
+        gestorLobby.desmarcarListo(cliente.getId());
     }
 
 
@@ -277,21 +443,63 @@ public class ServidorUDP {
 
         notificarJugadores(Protocolo.JUGADOR_LISTO);
 
+
         if (todosListos) {
 
-            controladorPartida.establecerEstado(EstadoPartida.EN_CURSO);
+            ClienteConectado jugador1 =
+                    gestorConexiones.buscarCliente(1);
 
+            ClienteConectado jugador2 =
+                    gestorConexiones.buscarCliente(2);
+
+            if (jugador1 == null || jugador2 == null) {
+                return;
+            }
+
+            String personaje1 =
+                    jugador1.getPersonajeSeleccionado();
+
+            String personaje2 =
+                    jugador2.getPersonajeSeleccionado();
+
+            if (personaje1 == null || personaje2 == null) {
+                return;
+            }
+
+            // Crear la partida con los dos jugadores.
+            gestorPartida.iniciarPartida(
+                    personaje1,
+                    personaje2
+            );
+
+            // Cambiar el estado del servidor.
+            controladorPartida.establecerEstado(
+                    EstadoPartida.EN_CURSO
+            );
+
+            // Enviar las selecciones de personajes.
+            notificarPersonajes();
+
+            // Avisar que comienza la partida.
             notificarJugadores(Protocolo.EMPIEZA);
+
+            // Iniciar el hilo que envía posiciones.
+            iniciarEnvioEstados();
         }
+
     }
 
     private synchronized void finalizarPartida() {
+
 
         if (!controladorPartida.estaEnCurso()) {
             return;
         }
 
         controladorPartida.establecerEstado(EstadoPartida.FINALIZADA);
+        detenerEnvioEstados();
+        gestorPartida.detenerPartida();
+
 
         notificarJugadores(Protocolo.PARTIDA_FINALIZADA);
 
@@ -324,11 +532,16 @@ public class ServidorUDP {
 
     private synchronized void limpiarSesion() {
 
+        detenerEnvioEstados();
+        gestorPartida.detenerPartida();
+
         gestorConexiones.eliminarTodos();
         gestorLobby.reiniciar();
         controladorPartida.reiniciar();
 
-        System.out.println("Servidor disponible para una nueva partida.");
+        System.out.println(
+                "Servidor disponible para una nueva partida."
+        );
     }
 
     private void iniciarControlDesconexiones() {
@@ -375,12 +588,9 @@ public class ServidorUDP {
         hilo.start();
     }
 
-    private synchronized void responderKeepAlive(
-            InetAddress ip,
-            int puertoCliente) {
+    private synchronized void responderKeepAlive(InetAddress ip, int puertoCliente) {
 
-        ClienteConectado cliente =
-                gestorConexiones.buscarCliente(ip, puertoCliente);
+        ClienteConectado cliente = gestorConexiones.buscarCliente(ip, puertoCliente);
 
         if (cliente == null) {
             return;
@@ -390,12 +600,46 @@ public class ServidorUDP {
         cliente.actualizarActividad();
 
         // Confirmar que el servidor sigue funcionando.
-        enviarRespuesta(
-                Protocolo.KEEP_ALIVE_OK,
-                ip,
-                puertoCliente
-        );
+        enviarRespuesta(Protocolo.KEEP_ALIVE_OK, ip, puertoCliente);
     }
+
+
+    private synchronized void enviarEstadoJugadores() {
+
+        if (controladorPartida.getEstado() != EstadoPartida.EN_CURSO) {
+            return;
+        }
+
+        if (!gestorPartida.hayPartidaActiva()) {
+            return;
+        }
+
+        secuenciaEstado++;
+
+        String mensaje = gestorPartida.obtenerEstado(secuenciaEstado);
+
+        if (mensaje == null) {
+            return;
+        }
+
+        notificarJugadores(mensaje);
+    }
+
+
+    private synchronized void detenerEnvioEstados() {
+
+        enviandoEstados = false;
+
+        if (hiloEstados != null) {
+
+            hiloEstados.interrupt();
+
+            hiloEstados = null;
+        }
+
+        System.out.println("Envio de estados detenido.");
+    }
+
 
     private void notificarJugadores(String mensaje) {
 
@@ -415,8 +659,12 @@ public class ServidorUDP {
 
             socket.send(paquete);
 
-            if (!mensaje.equals(Protocolo.KEEP_ALIVE_OK)) {
-                System.out.println("Respuesta enviada: " + mensaje);
+            if (!mensaje.equals(Protocolo.KEEP_ALIVE_OK)
+                    && !mensaje.startsWith(Protocolo.ESTADO + "|")) {
+
+                System.out.println(
+                        "Respuesta enviada: " + mensaje
+                );
             }
 
         } catch (IOException e) {
@@ -425,8 +673,14 @@ public class ServidorUDP {
         }
     }
 
+    private synchronized boolean estaEnviandoEstados() {
+        return enviandoEstados;
+    }
+
     public void detener() {
 
+        detenerEnvioEstados();
+        gestorPartida.detenerPartida();
         ejecutando = false;
 
         if (socket != null && !socket.isClosed()) {

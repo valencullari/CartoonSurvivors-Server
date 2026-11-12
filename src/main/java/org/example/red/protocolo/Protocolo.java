@@ -34,6 +34,8 @@ public final class Protocolo {
 
     // Partida
     public static final String PARTIDA_FINALIZADA = "PARTIDA_FINALIZADA";
+    public static final String MOVER = "MOVER";
+    public static final String ESTADO = "ESTADO";
 
     // Finalización de sesión
     public static final String VOLVER_AL_MENU = "VOLVER_AL_MENU";
