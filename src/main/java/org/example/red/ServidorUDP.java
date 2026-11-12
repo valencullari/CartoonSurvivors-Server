@@ -1,4 +1,3 @@
-
 package org.example.red;
 
 import org.example.red.gestor.*;
@@ -49,17 +48,11 @@ public class ServidorUDP {
 
                 byte[] buffer = new byte[1024];
 
-                DatagramPacket paquete =
-                        new DatagramPacket(buffer, buffer.length);
+                DatagramPacket paquete = new DatagramPacket(buffer, buffer.length);
 
                 socket.receive(paquete);
 
-                String mensaje = new String(
-                        paquete.getData(),
-                        paquete.getOffset(),
-                        paquete.getLength(),
-                        StandardCharsets.UTF_8
-                ).trim();
+                String mensaje = new String(paquete.getData(), paquete.getOffset(), paquete.getLength(), StandardCharsets.UTF_8).trim();
 
                 procesarMensaje(mensaje, paquete);
             }
@@ -84,26 +77,37 @@ public class ServidorUDP {
         }
     }
 
-    private void procesarMensaje(
-            String mensaje,
-            DatagramPacket paquete) {
+    private void procesarMensaje(String mensaje, DatagramPacket paquete) {
 
         InetAddress ip = paquete.getAddress();
         int puertoCliente = paquete.getPort();
 
-        System.out.println(
-                "Mensaje recibido: " + mensaje + " desde " + ip
-        );
+        if (!mensaje.equals(Protocolo.KEEP_ALIVE)) {
+            System.out.println(
+                    "Mensaje recibido: " + mensaje + " desde " + ip
+            );
+        }
+
+        if (mensaje.startsWith(Protocolo.PERSONAJE + "|")) {
+
+            String[] partes = mensaje.split("\\|", -1);
+
+            if (partes.length == 2) {
+
+                seleccionarPersonaje(ip, puertoCliente, partes[1]);
+
+            } else {
+                System.out.println("Formato de selección de personaje inválido.");
+            }
+
+            return;
+        }
 
         switch (mensaje) {
 
             case Protocolo.BUSCAR_SERVIDOR:
 
-                enviarRespuesta(
-                        Protocolo.SERVIDOR_ENCONTRADO,
-                        ip,
-                        puertoCliente
-                );
+                enviarRespuesta(Protocolo.SERVIDOR_ENCONTRADO, ip, puertoCliente);
 
                 break;
 
@@ -113,11 +117,13 @@ public class ServidorUDP {
 
                 break;
 
+
             case Protocolo.KEEP_ALIVE:
 
-                actualizarActividad(ip, puertoCliente);
+                responderKeepAlive(ip, puertoCliente);
 
                 break;
+
 
             case Protocolo.LISTO:
 
@@ -135,11 +141,7 @@ public class ServidorUDP {
 
             case Protocolo.DESCONECTAR:
 
-                finalizarSesion(
-                        ip,
-                        puertoCliente,
-                        Protocolo.SESION_FINALIZADA
-                );
+                finalizarSesion(ip, puertoCliente, Protocolo.SESION_FINALIZADA);
 
                 break;
 
@@ -151,70 +153,123 @@ public class ServidorUDP {
         }
     }
 
-    private synchronized void conectarCliente(
-            InetAddress ip,
-            int puertoCliente) {
+    private synchronized void conectarCliente(InetAddress ip, int puertoCliente) {
 
-        if (controladorPartida.getEstado()
-                != EstadoPartida.ESPERANDO_JUGADORES) {
+        if (controladorPartida.getEstado() != EstadoPartida.ESPERANDO_JUGADORES) {
 
-            enviarRespuesta(
-                    Protocolo.SERVIDOR_LLENO,
-                    ip,
-                    puertoCliente
-            );
+            enviarRespuesta(Protocolo.SERVIDOR_LLENO, ip, puertoCliente);
 
             return;
         }
 
-        ClienteConectado cliente =
-                gestorConexiones.registrarCliente(ip, puertoCliente);
+        ClienteConectado cliente = gestorConexiones.registrarCliente(ip, puertoCliente);
 
         if (cliente == null) {
 
-            enviarRespuesta(
-                    Protocolo.SERVIDOR_LLENO,
-                    ip,
-                    puertoCliente
-            );
+            enviarRespuesta(Protocolo.SERVIDOR_LLENO, ip, puertoCliente);
 
             return;
         }
 
-        String respuesta = cliente.getId() == 1
-                ? Protocolo.JUGADOR_1
-                : Protocolo.JUGADOR_2;
+        String respuesta = cliente.getId() == 1 ? Protocolo.JUGADOR_1 : Protocolo.JUGADOR_2;
 
         enviarRespuesta(respuesta, ip, puertoCliente);
 
         if (gestorConexiones.cantidadClientes() == 1) {
 
-            controladorPartida.establecerEstado(
-                    EstadoPartida.ESPERANDO_JUGADORES
-            );
+            controladorPartida.establecerEstado(EstadoPartida.ESPERANDO_JUGADORES);
 
         } else if (gestorConexiones.partidaCompleta()) {
 
-            controladorPartida.establecerEstado(
-                    EstadoPartida.LOBBY
-            );
+            controladorPartida.establecerEstado(EstadoPartida.LOBBY);
 
             notificarJugadores(Protocolo.JUGADOR_CONECTADO);
         }
     }
 
-    private synchronized void marcarListo(
-            InetAddress ip,
-            int puertoCliente) {
+
+    private synchronized void seleccionarPersonaje(InetAddress ip, int puertoCliente, String personaje) {
+
+        // Solo se puede seleccionar mientras
+        // esperamos jugadores o estamos en el lobby.
+
+        EstadoPartida estado = controladorPartida.getEstado();
+
+        if (estado != EstadoPartida.ESPERANDO_JUGADORES && estado != EstadoPartida.LOBBY) {
+            return;
+        }
+
+        // Buscar al cliente que envió el paquete.
+
+        ClienteConectado cliente = gestorConexiones.buscarCliente(ip, puertoCliente);
+
+        if (cliente == null) {
+            return;
+        }
+
+        // No permitimos cambiar el personaje
+        // después de confirmar LISTO.
+
+        if (cliente.isListo()) {
+            return;
+        }
+
+        // Por ahora solo existe Mordecai.
+        // Después agregaremos más personajes.
+
+        if (!personaje.equals("MORDECAI")) {
+
+            System.out.println("Personaje no válido: " + personaje);
+
+            return;
+        }
+
+        // Guardar la selección del jugador.
+
+        cliente.setPersonajeSeleccionado(personaje);
+        cliente.actualizarActividad();
+
+        System.out.println("Jugador " + cliente.getId() + " seleccionó: " + personaje);
+
+        // Avisar a los clientes qué personajes
+        // están seleccionados.
+
+        notificarPersonajes();
+    }
+
+
+    private synchronized void notificarPersonajes() {
+
+        StringBuilder mensaje = new StringBuilder(Protocolo.PERSONAJES);
+
+        for (ClienteConectado cliente : gestorConexiones.getClientes()) {
+
+            String personaje = cliente.getPersonajeSeleccionado();
+
+            if (personaje == null) {
+                personaje = "NINGUNO";
+            }
+
+            mensaje.append("|").append(cliente.getId()).append(":").append(personaje);
+        }
+
+        notificarJugadores(mensaje.toString());
+    }
+
+
+    private synchronized void marcarListo(InetAddress ip, int puertoCliente) {
 
         if (controladorPartida.getEstado() != EstadoPartida.LOBBY) {
             return;
         }
 
-        ClienteConectado cliente =
-                gestorConexiones.buscarCliente(ip, puertoCliente);
+        ClienteConectado cliente = gestorConexiones.buscarCliente(ip, puertoCliente);
 
         if (cliente == null) {
+            return;
+        }
+
+        if (cliente.getPersonajeSeleccionado() == null) {
             return;
         }
 
@@ -224,23 +279,9 @@ public class ServidorUDP {
 
         if (todosListos) {
 
-            controladorPartida.establecerEstado(
-                    EstadoPartida.EN_CURSO
-            );
+            controladorPartida.establecerEstado(EstadoPartida.EN_CURSO);
 
             notificarJugadores(Protocolo.EMPIEZA);
-        }
-    }
-
-    private synchronized void actualizarActividad(
-            InetAddress ip,
-            int puertoCliente) {
-
-        ClienteConectado cliente =
-                gestorConexiones.buscarCliente(ip, puertoCliente);
-
-        if (cliente != null) {
-            cliente.actualizarActividad();
         }
     }
 
@@ -250,45 +291,31 @@ public class ServidorUDP {
             return;
         }
 
-        controladorPartida.establecerEstado(
-                EstadoPartida.FINALIZADA
-        );
+        controladorPartida.establecerEstado(EstadoPartida.FINALIZADA);
 
         notificarJugadores(Protocolo.PARTIDA_FINALIZADA);
 
         System.out.println("Partida finalizada.");
     }
 
-    private synchronized void finalizarSesion(
-            InetAddress ip,
-            int puertoCliente,
-            String mensajeAviso) {
+    private synchronized void finalizarSesion(InetAddress ip, int puertoCliente, String mensajeAviso) {
 
-        ClienteConectado cliente =
-                gestorConexiones.buscarCliente(ip, puertoCliente);
+        ClienteConectado cliente = gestorConexiones.buscarCliente(ip, puertoCliente);
 
         if (cliente == null) {
             return;
         }
 
-        System.out.println(
-                "Finalizando sesión por salida del jugador "
-                        + cliente.getId()
-        );
+        System.out.println("Finalizando sesión por salida del jugador " + cliente.getId());
 
-        List<ClienteConectado> jugadores =
-                gestorConexiones.getClientes();
+        List<ClienteConectado> jugadores = gestorConexiones.getClientes();
 
         // Avisar a todos los demás jugadores antes de limpiar.
         for (ClienteConectado jugador : jugadores) {
 
             if (jugador.getId() != cliente.getId()) {
 
-                enviarRespuesta(
-                        mensajeAviso,
-                        jugador.getDireccionIP(),
-                        jugador.getPuerto()
-                );
+                enviarRespuesta(mensajeAviso, jugador.getDireccionIP(), jugador.getPuerto());
             }
         }
 
@@ -301,9 +328,7 @@ public class ServidorUDP {
         gestorLobby.reiniciar();
         controladorPartida.reiniciar();
 
-        System.out.println(
-                "Servidor disponible para una nueva partida."
-        );
+        System.out.println("Servidor disponible para una nueva partida.");
     }
 
     private void iniciarControlDesconexiones() {
@@ -319,32 +344,19 @@ public class ServidorUDP {
 
                         Thread.sleep(1000);
 
-                        List<ClienteConectado> desconectados =
-                                gestorDesconexiones.detectarDesconexiones(
-                                        gestorConexiones
-                                );
+                        List<ClienteConectado> desconectados = gestorDesconexiones.detectarDesconexiones(gestorConexiones);
 
                         if (!desconectados.isEmpty()) {
 
                             synchronized (ServidorUDP.this) {
 
-                                if (ejecutando
-                                        && !desconectados.isEmpty()) {
+                                if (ejecutando && !desconectados.isEmpty()) {
 
-                                    ClienteConectado desconectado =
-                                            desconectados.get(0);
+                                    ClienteConectado desconectado = desconectados.get(0);
 
-                                    System.out.println(
-                                            "Jugador "
-                                                    + desconectado.getId()
-                                                    + " desconectado inesperadamente."
-                                    );
+                                    System.out.println("Jugador " + desconectado.getId() + " desconectado inesperadamente.");
 
-                                    finalizarSesion(
-                                            desconectado.getDireccionIP(),
-                                            desconectado.getPuerto(),
-                                            Protocolo.SESION_FINALIZADA
-                                    );
+                                    finalizarSesion(desconectado.getDireccionIP(), desconectado.getPuerto(), Protocolo.SESION_FINALIZADA);
                                 }
                             }
                         }
@@ -363,44 +375,53 @@ public class ServidorUDP {
         hilo.start();
     }
 
+    private synchronized void responderKeepAlive(
+            InetAddress ip,
+            int puertoCliente) {
+
+        ClienteConectado cliente =
+                gestorConexiones.buscarCliente(ip, puertoCliente);
+
+        if (cliente == null) {
+            return;
+        }
+
+        // Actualizar actividad, como antes.
+        cliente.actualizarActividad();
+
+        // Confirmar que el servidor sigue funcionando.
+        enviarRespuesta(
+                Protocolo.KEEP_ALIVE_OK,
+                ip,
+                puertoCliente
+        );
+    }
+
     private void notificarJugadores(String mensaje) {
 
-        for (ClienteConectado cliente :
-                gestorConexiones.getClientes()) {
+        for (ClienteConectado cliente : gestorConexiones.getClientes()) {
 
-            enviarRespuesta(
-                    mensaje,
-                    cliente.getDireccionIP(),
-                    cliente.getPuerto()
-            );
+            enviarRespuesta(mensaje, cliente.getDireccionIP(), cliente.getPuerto());
         }
     }
 
-    private void enviarRespuesta(
-            String mensaje,
-            InetAddress direccion,
-            int puertoDestino) {
+    private void enviarRespuesta(String mensaje, InetAddress direccion, int puertoDestino) {
 
         try {
 
             byte[] datos = mensaje.getBytes(StandardCharsets.UTF_8);
 
-            DatagramPacket paquete = new DatagramPacket(
-                    datos,
-                    datos.length,
-                    direccion,
-                    puertoDestino
-            );
+            DatagramPacket paquete = new DatagramPacket(datos, datos.length, direccion, puertoDestino);
 
             socket.send(paquete);
 
-            System.out.println("Respuesta enviada: " + mensaje);
+            if (!mensaje.equals(Protocolo.KEEP_ALIVE_OK)) {
+                System.out.println("Respuesta enviada: " + mensaje);
+            }
 
         } catch (IOException e) {
 
-            System.out.println(
-                    "Error enviando respuesta: " + e.getMessage()
-            );
+            System.out.println("Error enviando respuesta: " + e.getMessage());
         }
     }
 

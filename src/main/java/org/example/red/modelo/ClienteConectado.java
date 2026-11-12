@@ -13,6 +13,7 @@ public class ClienteConectado {
 
     private boolean conectado;
     private boolean listo;
+    private String personajeSeleccionado;
 
     public ClienteConectado(
             int id,
@@ -59,6 +60,13 @@ public class ClienteConectado {
 
     public void setListo(boolean listo) {
         this.listo = listo;
+    }
+    public String getPersonajeSeleccionado() {
+        return personajeSeleccionado;
+    }
+
+    public void setPersonajeSeleccionado(String personaje) {
+        this.personajeSeleccionado = personaje;
     }
 
     public void desconectar() {

@@ -15,6 +15,7 @@ public final class Protocolo {
     public static final String CONECTAR = "CONECTAR";
     public static final String DESCONECTAR = "DESCONECTAR";
     public static final String KEEP_ALIVE = "KEEP_ALIVE";
+    public static final String KEEP_ALIVE_OK = "KEEP_ALIVE_OK";
 
     // Identificación
     public static final String JUGADOR_1 = "OK-1";
@@ -24,7 +25,12 @@ public final class Protocolo {
     public static final String JUGADOR_CONECTADO = "JUGADOR_CONECTADO";
     public static final String JUGADOR_LISTO = "JUGADOR_LISTO";
     public static final String LISTO = "LISTO";
+    public static final String NO_LISTO = "NO_LISTO";
+    public static final String PERSONAJE = "PERSONAJE";
+    public static final String PERSONAJES = "PERSONAJES";
     public static final String EMPIEZA = "EMPIEZA";
+
+
 
     // Partida
     public static final String PARTIDA_FINALIZADA = "PARTIDA_FINALIZADA";
