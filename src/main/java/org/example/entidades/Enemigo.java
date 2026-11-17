@@ -2,12 +2,13 @@ package org.example.entidades;
 
 public class Enemigo {
 
+    private static final float ANCHO_HITBOX = 24f;
+    private static final float ALTO_HITBOX = 40f;
+
     private final int id;
     private final TipoEnemigo tipo;
-
     private float posicionX;
     private float posicionY;
-
     private int vida;
 
     public Enemigo(int id, TipoEnemigo tipo, float posicionX, float posicionY) {
@@ -26,13 +27,30 @@ public class Enemigo {
         float distancia1 = calcularDistancia(jugador1);
         float distancia2 = calcularDistancia(jugador2);
 
+
         Jugador objetivo;
 
-        if (distancia1 <= distancia2) {
+        if (!jugador1.estaVivo() && !jugador2.estaVivo()) {
+            return;
+        }
+
+        if (!jugador1.estaVivo()) {
+
+            objetivo = jugador2;
+
+        } else if (!jugador2.estaVivo()) {
+
             objetivo = jugador1;
+
+        } else if (distancia1 <= distancia2) {
+
+            objetivo = jugador1;
+
         } else {
+
             objetivo = jugador2;
         }
+
 
         float direccionX = objetivo.getPosicionX() - posicionX;
 
@@ -69,9 +87,7 @@ public class Enemigo {
         if (cantidad <= 0) {
             return;
         }
-
         vida -= cantidad;
-
         if (vida < 0) {
             vida = 0;
         }
@@ -103,5 +119,13 @@ public class Enemigo {
 
     public int getDanio() {
         return tipo.getDanio();
+    }
+
+    public float getAnchoHitbox() {
+        return ANCHO_HITBOX;
+    }
+
+    public float getAltoHitbox() {
+        return ALTO_HITBOX;
     }
 }
