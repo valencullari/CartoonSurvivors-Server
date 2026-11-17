@@ -1,4 +1,3 @@
-
 package org.example.juego;
 
 public class GestorPartida {
@@ -6,19 +5,14 @@ public class GestorPartida {
     private Partida partida;
     private BucleJuego bucleJuego;
 
-    public synchronized void iniciarPartida(
-            String personaje1,
-            String personaje2) {
+    public synchronized void iniciarPartida(String personaje1, String personaje2) {
 
         if (partida != null) {
             System.out.println("Ya existe una partida activa.");
             return;
         }
 
-        partida = new Partida(
-                personaje1,
-                personaje2
-        );
+        partida = new Partida(personaje1, personaje2);
 
         bucleJuego = new BucleJuego(partida);
 
@@ -29,30 +23,31 @@ public class GestorPartida {
         System.out.println("Jugador 2: " + personaje2);
     }
 
-    public synchronized void moverJugador(
-            int idJugador,
-            float direccionX,
-            float direccionY) {
+    public synchronized void moverJugador(int idJugador, float direccionX, float direccionY) {
 
         if (partida == null) {
             return;
         }
 
-        partida.moverJugador(
-                idJugador,
-                direccionX,
-                direccionY
-        );
+        partida.moverJugador(idJugador, direccionX, direccionY);
     }
 
-    public synchronized String obtenerEstado(
-            long secuencia) {
+    public synchronized String obtenerEstado(long secuencia) {
 
         if (partida == null) {
             return null;
         }
 
         return partida.crearMensajeEstado(secuencia);
+    }
+
+    public synchronized String obtenerEstadoEnemigos(long secuencia) {
+
+        if (partida == null) {
+            return null;
+        }
+
+        return partida.crearMensajeEnemigos(secuencia);
     }
 
     public synchronized void detenerPartida() {

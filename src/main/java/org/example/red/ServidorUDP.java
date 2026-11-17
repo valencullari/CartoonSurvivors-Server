@@ -91,12 +91,9 @@ public class ServidorUDP {
         InetAddress ip = paquete.getAddress();
         int puertoCliente = paquete.getPort();
 
-        if (!mensaje.equals(Protocolo.KEEP_ALIVE)
-                && !mensaje.startsWith(Protocolo.MOVER + "|")) {
+        if (!mensaje.equals(Protocolo.KEEP_ALIVE) && !mensaje.startsWith(Protocolo.MOVER + "|")) {
 
-            System.out.println(
-                    "Mensaje recibido: " + mensaje + " desde " + ip
-            );
+            System.out.println("Mensaje recibido: " + mensaje + " desde " + ip);
         }
 
         if (mensaje.startsWith(Protocolo.PERSONAJE + "|")) {
@@ -116,11 +113,7 @@ public class ServidorUDP {
 
         if (mensaje.startsWith(Protocolo.MOVER + "|")) {
 
-            procesarMovimiento(
-                    mensaje,
-                    ip,
-                    puertoCliente
-            );
+            procesarMovimiento(mensaje, ip, puertoCliente);
 
             return;
         }
@@ -216,23 +209,15 @@ public class ServidorUDP {
     }
 
 
-    private synchronized void procesarMovimiento(
-            String mensaje,
-            InetAddress ip,
-            int puertoCliente) {
+    private synchronized void procesarMovimiento(String mensaje, InetAddress ip, int puertoCliente) {
 
         // Solo permitir movimiento durante la partida.
-        if (controladorPartida.getEstado()
-                != EstadoPartida.EN_CURSO) {
+        if (controladorPartida.getEstado() != EstadoPartida.EN_CURSO) {
             return;
         }
 
         // Identificar al jugador que envió el paquete.
-        ClienteConectado cliente =
-                gestorConexiones.buscarCliente(
-                        ip,
-                        puertoCliente
-                );
+        ClienteConectado cliente = gestorConexiones.buscarCliente(ip, puertoCliente);
 
         if (cliente == null) {
             return;
@@ -247,14 +232,11 @@ public class ServidorUDP {
 
         try {
 
-            float direccionX =
-                    Float.parseFloat(partes[1]);
+            float direccionX = Float.parseFloat(partes[1]);
 
-            float direccionY =
-                    Float.parseFloat(partes[2]);
+            float direccionY = Float.parseFloat(partes[2]);
 
-            if (!Float.isFinite(direccionX)
-                    || !Float.isFinite(direccionY)) {
+            if (!Float.isFinite(direccionX) || !Float.isFinite(direccionY)) {
                 return;
             }
 
@@ -262,17 +244,11 @@ public class ServidorUDP {
             cliente.actualizarActividad();
 
             // Enviar el movimiento a la partida.
-            gestorPartida.moverJugador(
-                    cliente.getId(),
-                    direccionX,
-                    direccionY
-            );
+            gestorPartida.moverJugador(cliente.getId(), direccionX, direccionY);
 
         } catch (NumberFormatException e) {
 
-            System.out.println(
-                    "Movimiento invalido: " + mensaje
-            );
+            System.out.println("Movimiento invalido: " + mensaje);
         }
     }
 
@@ -403,17 +379,13 @@ public class ServidorUDP {
         notificarJugadores(mensaje.toString());
     }
 
-    private synchronized void desmarcarListo(
-            InetAddress ip,
-            int puertoCliente) {
+    private synchronized void desmarcarListo(InetAddress ip, int puertoCliente) {
 
-        if (controladorPartida.getEstado()
-                != EstadoPartida.LOBBY) {
+        if (controladorPartida.getEstado() != EstadoPartida.LOBBY) {
             return;
         }
 
-        ClienteConectado cliente =
-                gestorConexiones.buscarCliente(ip, puertoCliente);
+        ClienteConectado cliente = gestorConexiones.buscarCliente(ip, puertoCliente);
 
         if (cliente == null) {
             return;
@@ -446,36 +418,27 @@ public class ServidorUDP {
 
         if (todosListos) {
 
-            ClienteConectado jugador1 =
-                    gestorConexiones.buscarCliente(1);
+            ClienteConectado jugador1 = gestorConexiones.buscarCliente(1);
 
-            ClienteConectado jugador2 =
-                    gestorConexiones.buscarCliente(2);
+            ClienteConectado jugador2 = gestorConexiones.buscarCliente(2);
 
             if (jugador1 == null || jugador2 == null) {
                 return;
             }
 
-            String personaje1 =
-                    jugador1.getPersonajeSeleccionado();
+            String personaje1 = jugador1.getPersonajeSeleccionado();
 
-            String personaje2 =
-                    jugador2.getPersonajeSeleccionado();
+            String personaje2 = jugador2.getPersonajeSeleccionado();
 
             if (personaje1 == null || personaje2 == null) {
                 return;
             }
 
             // Crear la partida con los dos jugadores.
-            gestorPartida.iniciarPartida(
-                    personaje1,
-                    personaje2
-            );
+            gestorPartida.iniciarPartida(personaje1, personaje2);
 
             // Cambiar el estado del servidor.
-            controladorPartida.establecerEstado(
-                    EstadoPartida.EN_CURSO
-            );
+            controladorPartida.establecerEstado(EstadoPartida.EN_CURSO);
 
             // Enviar las selecciones de personajes.
             notificarPersonajes();
@@ -539,9 +502,7 @@ public class ServidorUDP {
         gestorLobby.reiniciar();
         controladorPartida.reiniciar();
 
-        System.out.println(
-                "Servidor disponible para una nueva partida."
-        );
+        System.out.println("Servidor disponible para una nueva partida.");
     }
 
     private void iniciarControlDesconexiones() {
@@ -616,13 +577,19 @@ public class ServidorUDP {
 
         secuenciaEstado++;
 
-        String mensaje = gestorPartida.obtenerEstado(secuenciaEstado);
+        // Obtener posiciones de ambos jugadores.
+        String estadoJugadores = gestorPartida.obtenerEstado(secuenciaEstado);
 
-        if (mensaje == null) {
-            return;
+        // Obtener posición del enemigo.
+        String estadoEnemigos = gestorPartida.obtenerEstadoEnemigos(secuenciaEstado);
+
+        if (estadoJugadores != null) {
+            notificarJugadores(estadoJugadores);
         }
 
-        notificarJugadores(mensaje);
+        if (estadoEnemigos != null) {
+            notificarJugadores(estadoEnemigos);
+        }
     }
 
 
@@ -659,12 +626,9 @@ public class ServidorUDP {
 
             socket.send(paquete);
 
-            if (!mensaje.equals(Protocolo.KEEP_ALIVE_OK)
-                    && !mensaje.startsWith(Protocolo.ESTADO + "|")) {
+            if (!mensaje.equals(Protocolo.KEEP_ALIVE_OK) && !mensaje.startsWith(Protocolo.ESTADO + "|") && !mensaje.startsWith(Protocolo.ENEMIGOS + "|")) {
 
-                System.out.println(
-                        "Respuesta enviada: " + mensaje
-                );
+                System.out.println("Respuesta enviada: " + mensaje);
             }
 
         } catch (IOException e) {
