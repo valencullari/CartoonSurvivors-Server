@@ -2,13 +2,16 @@ package org.example.juego;
 
 import org.example.entidades.Jugador;
 import org.example.entidades.Enemigo;
+import org.example.entidades.TipoEnemigo;
 
 public class Partida {
 
     private final Jugador jugador1;
     private final Jugador jugador2;
 
-    private final Enemigo enemigo;
+    private final GestorEnemigos gestorEnemigos;
+    private final DificultadPartida dificultad;
+    private final GeneradorEnemigos generadorEnemigos;
 
     public Partida(String personaje1, String personaje2) {
 
@@ -16,8 +19,14 @@ public class Partida {
 
         jugador2 = new Jugador(2, personaje2, 6460, 6400);
 
-        // Primer enemigo de prueba.
-        enemigo = new Enemigo(1, 6400, 6650);
+        gestorEnemigos = new GestorEnemigos();
+
+        dificultad = new DificultadPartida();
+
+        generadorEnemigos = new GeneradorEnemigos(gestorEnemigos, dificultad);
+
+        // Primer enemigo al comenzar la partida.
+        gestorEnemigos.crearEnemigo(TipoEnemigo.BASICO, 6400, 6650);
     }
 
     public synchronized void moverJugador(int id, float direccionX, float direccionY) {
@@ -25,18 +34,24 @@ public class Partida {
         Jugador jugador = obtenerJugador(id);
 
         if (jugador != null) {
-
             jugador.establecerMovimiento(direccionX, direccionY);
         }
     }
 
     public synchronized void actualizar(float delta) {
 
+        // 1. Actualizar jugadores.
         jugador1.actualizar(delta);
         jugador2.actualizar(delta);
 
-        // El enemigo persigue al jugador más cercano.
-        enemigo.actualizar(delta, jugador1, jugador2);
+        // 2. Actualizar el tiempo y la dificultad.
+        dificultad.actualizar(delta);
+
+        // 3. Generar nuevos enemigos.
+        generadorEnemigos.actualizar(delta, jugador1, jugador2);
+
+        // 4. Actualizar todos los enemigos.
+        gestorEnemigos.actualizar(delta, jugador1, jugador2);
     }
 
     public synchronized Jugador obtenerJugador(int id) {
@@ -64,7 +79,17 @@ public class Partida {
 
     public synchronized String crearMensajeEnemigos(long secuencia) {
 
-        return "ENEMIGOS|" + secuencia + "|" + enemigo.getId() + ":" + enemigo.getPosicionX() + ":" + enemigo.getPosicionY() + ":" + enemigo.getVida();
+        StringBuilder mensaje = new StringBuilder();
+
+        mensaje.append("ENEMIGOS");
+        mensaje.append("|").append(secuencia);
+
+        for (Enemigo enemigo : gestorEnemigos.getEnemigos()) {
+
+            mensaje.append("|").append(enemigo.getId()).append(":").append(enemigo.getTipo().name()).append(":").append(enemigo.getPosicionX()).append(":").append(enemigo.getPosicionY()).append(":").append(enemigo.getVida());
+        }
+
+        return mensaje.toString();
     }
 
     public Jugador getJugador1() {

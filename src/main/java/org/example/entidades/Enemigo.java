@@ -3,30 +3,29 @@ package org.example.entidades;
 public class Enemigo {
 
     private final int id;
+    private final TipoEnemigo tipo;
 
     private float posicionX;
     private float posicionY;
 
     private int vida;
 
-    private static final float VELOCIDAD = 80f;
-
-    public Enemigo(int id, float posicionX, float posicionY) {
+    public Enemigo(int id, TipoEnemigo tipo, float posicionX, float posicionY) {
 
         this.id = id;
+        this.tipo = tipo;
+
         this.posicionX = posicionX;
         this.posicionY = posicionY;
 
-        this.vida = 25;
+        this.vida = tipo.getVidaMaxima();
     }
 
     public void actualizar(float delta, Jugador jugador1, Jugador jugador2) {
 
-        // Distancia a cada jugador.
         float distancia1 = calcularDistancia(jugador1);
         float distancia2 = calcularDistancia(jugador2);
 
-        // Elegir el jugador más cercano.
         Jugador objetivo;
 
         if (distancia1 <= distancia2) {
@@ -35,15 +34,12 @@ public class Enemigo {
             objetivo = jugador2;
         }
 
-        // Calcular hacia dónde tiene que moverse.
         float direccionX = objetivo.getPosicionX() - posicionX;
 
         float direccionY = objetivo.getPosicionY() - posicionY;
 
         float distancia = (float) Math.sqrt(direccionX * direccionX + direccionY * direccionY);
 
-        // Evitar dividir por cero y detenerse
-        // cerca del jugador.
         if (distancia <= 28f) {
             return;
         }
@@ -51,9 +47,8 @@ public class Enemigo {
         direccionX /= distancia;
         direccionY /= distancia;
 
-        float movimiento = VELOCIDAD * delta;
+        float movimiento = tipo.getVelocidad() * delta;
 
-        // No atravesar al objetivo en un solo paso.
         movimiento = Math.min(movimiento, distancia - 28f);
 
         posicionX += direccionX * movimiento;
@@ -69,8 +64,29 @@ public class Enemigo {
         return (float) Math.sqrt(diferenciaX * diferenciaX + diferenciaY * diferenciaY);
     }
 
+    public void recibirDanio(int cantidad) {
+
+        if (cantidad <= 0) {
+            return;
+        }
+
+        vida -= cantidad;
+
+        if (vida < 0) {
+            vida = 0;
+        }
+    }
+
+    public boolean estaVivo() {
+        return vida > 0;
+    }
+
     public int getId() {
         return id;
+    }
+
+    public TipoEnemigo getTipo() {
+        return tipo;
     }
 
     public float getPosicionX() {
@@ -83,5 +99,9 @@ public class Enemigo {
 
     public int getVida() {
         return vida;
+    }
+
+    public int getDanio() {
+        return tipo.getDanio();
     }
 }

@@ -1,4 +1,3 @@
-
 package org.example.entidades;
 
 public class Jugador {
@@ -17,11 +16,7 @@ public class Jugador {
 
     private long ultimoMovimiento;
 
-    public Jugador(
-            int id,
-            String personaje,
-            float posicionX,
-            float posicionY) {
+    public Jugador(int id, String personaje, float posicionX, float posicionY) {
 
         this.id = id;
         this.personaje = personaje;
@@ -62,8 +57,7 @@ public class Jugador {
 
         // Si dejamos de recibir movimientos,
         // el personaje debe detenerse.
-        if (System.currentTimeMillis() - ultimoMovimiento
-                > TIEMPO_SIN_MOVIMIENTO) {
+        if (System.currentTimeMillis() - ultimoMovimiento > TIEMPO_SIN_MOVIMIENTO) {
 
             direccionX = 0;
             direccionY = 0;
