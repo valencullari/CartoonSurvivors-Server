@@ -22,7 +22,7 @@ public class Partida {
 
     public Partida(String personaje1, String personaje2) {
 
-        jugador1 = new Jugador(1, personaje1, 6340, 6400);
+        jugador1 = new Jugador(1, personaje1, 11800, 6400);
         jugador2 = new Jugador(2, personaje2, 6460, 6400);
         jugador1.agregarArma(new Espada());
         jugador2.agregarArma(new Espada());

@@ -85,9 +85,9 @@ public class Jugador {
         posicionX += direccionX * VELOCIDAD * delta;
         posicionY += direccionY * VELOCIDAD * delta;
 
-        posicionX = Math.max(0, Math.min(12760, posicionX));
+        posicionX = Math.max(0, Math.min(12060, posicionX));
 
-        posicionY = Math.max(0, Math.min(12740, posicionY));
+        posicionY = Math.max(0, Math.min(12140, posicionY));
     }
 
     public void recibirDanio(float cantidad) {
