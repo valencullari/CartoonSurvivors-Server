@@ -17,26 +17,53 @@ public class SistemaColisiones {
                 continue;
             }
 
-            comprobarContacto(enemigo, jugador1, delta);
-            comprobarContacto(enemigo, jugador2, delta);
+            // Actualizar cooldown del enemigo.
+            enemigo.actualizarCooldownAtaque(delta);
+
+            if (!enemigo.puedeAtacar()) {
+                continue;
+            }
+
+            // Comprobar contacto con jugador 1.
+            if (jugador1.estaVivo() && colisionan(enemigo, jugador1)) {
+
+                aplicarGolpe(enemigo, jugador1);
+                continue;
+            }
+
+            // Comprobar contacto con jugador 2.
+            if (jugador2.estaVivo() && colisionan(enemigo, jugador2)) {
+
+                aplicarGolpe(enemigo, jugador2);
+            }
         }
     }
 
-    private void comprobarContacto(Enemigo enemigo, Jugador jugador, float delta) {
+    private void aplicarGolpe(Enemigo enemigo, Jugador jugador) {
 
-        if (!jugador.estaVivo()) {
-            return;
-        }
+        // 1. Aplicar una piña completa.
+        jugador.recibirDanio(enemigo.getDanio());
 
-        if (colisionan(enemigo.getPosicionX(), enemigo.getPosicionY(), enemigo.getAnchoHitbox(), enemigo.getAltoHitbox(), jugador.getPosicionX(), jugador.getPosicionY(), jugador.getAnchoHitbox(), jugador.getAltoHitbox())) {
+        // 2. Iniciar cooldown.
+        enemigo.registrarAtaque();
 
-            float danio = enemigo.getDanio() * delta;
-
-            jugador.recibirDanio(danio);
-        }
+        // 3. Empujar al enemigo hacia atrás.
+        enemigo.retrocederDesde(jugador);
     }
 
-    private boolean colisionan(float x1, float y1, float ancho1, float alto1, float x2, float y2, float ancho2, float alto2) {
+    private boolean colisionan(Enemigo enemigo, Jugador jugador) {
+
+        float x1 = enemigo.getPosicionX();
+        float y1 = enemigo.getPosicionY();
+
+        float ancho1 = enemigo.getAnchoHitbox();
+        float alto1 = enemigo.getAltoHitbox();
+
+        float x2 = jugador.getPosicionX();
+        float y2 = jugador.getPosicionY();
+
+        float ancho2 = jugador.getAnchoHitbox();
+        float alto2 = jugador.getAltoHitbox();
 
         return x1 < x2 + ancho2 && x1 + ancho1 > x2 && y1 < y2 + alto2 && y1 + alto1 > y2;
     }

@@ -41,7 +41,11 @@ public class GestorEnemigos {
                 continue;
             }
 
+
             enemigo.actualizar(delta, jugador1, jugador2);
+            enemigo.actualizarRetroceso(delta);
+
+
         }
 
         // 2. Resolver superposiciones entre enemigos.

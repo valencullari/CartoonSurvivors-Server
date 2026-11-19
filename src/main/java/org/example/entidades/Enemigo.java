@@ -4,12 +4,21 @@ public class Enemigo {
 
     private static final float ANCHO_HITBOX = 24f;
     private static final float ALTO_HITBOX = 40f;
+    private static final float COOLDOWN_ATAQUE = 1.0f;
+
+    private static final float FUERZA_RETROCESO = 18f;
+    private static final float DURACION_RETROCESO = 0.15f;
+
 
     private final int id;
     private final TipoEnemigo tipo;
     private float posicionX;
     private float posicionY;
     private int vida;
+    private float tiempoRestanteAtaque = 0f;
+    private float tiempoRetroceso = 0f;
+    private float velocidadRetrocesoX = 0f;
+    private float velocidadRetrocesoY = 0f;
 
     public Enemigo(int id, TipoEnemigo tipo, float posicionX, float posicionY) {
 
@@ -106,6 +115,74 @@ public class Enemigo {
         posicionX = Math.max(0f, Math.min(12800f - ANCHO_HITBOX, posicionX));
 
         posicionY = Math.max(0f, Math.min(12800f - ALTO_HITBOX, posicionY));
+    }
+
+
+    public void actualizarCooldownAtaque(float delta) {
+
+        if (tiempoRestanteAtaque > 0f) {
+            tiempoRestanteAtaque = Math.max(0f, tiempoRestanteAtaque - delta);
+        }
+    }
+
+
+    public void retrocederDesde(Jugador jugador) {
+
+        float centroEnemigoX = posicionX + ANCHO_HITBOX / 2f;
+
+        float centroEnemigoY = posicionY + ALTO_HITBOX / 2f;
+
+        float centroJugadorX = jugador.getPosicionX() + jugador.getAnchoHitbox() / 2f;
+
+        float centroJugadorY = jugador.getPosicionY() + jugador.getAltoHitbox() / 2f;
+
+        float direccionX = centroEnemigoX - centroJugadorX;
+        float direccionY = centroEnemigoY - centroJugadorY;
+
+        float distancia = (float) Math.sqrt(direccionX * direccionX + direccionY * direccionY);
+
+        if (distancia < 0.001f) {
+            direccionX = id % 2 == 0 ? 1f : -1f;
+            direccionY = 0f;
+        } else {
+            direccionX /= distancia;
+            direccionY /= distancia;
+        }
+
+        velocidadRetrocesoX = direccionX * FUERZA_RETROCESO / DURACION_RETROCESO;
+
+        velocidadRetrocesoY = direccionY * FUERZA_RETROCESO / DURACION_RETROCESO;
+
+        tiempoRetroceso = DURACION_RETROCESO;
+    }
+
+    public void actualizarRetroceso(float delta) {
+
+        if (tiempoRetroceso <= 0f) {
+            return;
+        }
+
+        float tiempoAplicado = Math.min(delta, tiempoRetroceso);
+
+        desplazarPorColision(velocidadRetrocesoX * tiempoAplicado, velocidadRetrocesoY * tiempoAplicado);
+
+        tiempoRetroceso -= tiempoAplicado;
+
+        if (tiempoRetroceso <= 0f) {
+            tiempoRetroceso = 0f;
+            velocidadRetrocesoX = 0f;
+            velocidadRetrocesoY = 0f;
+        }
+    }
+
+
+
+    public boolean puedeAtacar() {
+        return estaVivo() && tiempoRestanteAtaque <= 0f;
+    }
+
+    public void registrarAtaque() {
+        tiempoRestanteAtaque = COOLDOWN_ATAQUE;
     }
 
 
