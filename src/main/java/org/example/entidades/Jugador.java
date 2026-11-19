@@ -1,5 +1,10 @@
 package org.example.entidades;
 
+import org.example.entidades.armas.Arma;
+import java.util.ArrayList;
+import java.util.List;
+import org.example.juego.GestorEnemigos;
+
 public class Jugador {
 
     private static final float VELOCIDAD = 200f;
@@ -18,6 +23,7 @@ public class Jugador {
     private float direccionY;
 
     private float vida;
+    private final List<Arma> armas = new ArrayList<>();
 
     private long ultimoMovimiento;
 
@@ -93,6 +99,29 @@ public class Jugador {
         vida = Math.max(0f, vida - cantidad);
     }
 
+    public void agregarArma(Arma arma) {
+
+        if (arma == null) {
+            return;
+        }
+        armas.add(arma);
+    }
+
+
+    public void actualizarArmas(
+            float delta,
+            GestorEnemigos gestorEnemigos) {
+
+        if (!estaVivo()) {
+            return;
+        }
+
+        for (Arma arma : armas) {
+            arma.actualizar(delta, this, gestorEnemigos);
+        }
+    }
+
+
     public boolean estaVivo() {
         return vida > 0f;
     }
@@ -127,6 +156,10 @@ public class Jugador {
 
     public float getDireccionY() {
         return direccionY;
+    }
+
+    public List<Arma> getArmas() {
+        return List.copyOf(armas);
     }
 
     public float getAnchoHitbox() {

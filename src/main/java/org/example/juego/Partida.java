@@ -2,7 +2,8 @@ package org.example.juego;
 
 import org.example.entidades.Jugador;
 import org.example.entidades.Enemigo;
-import org.example.entidades.TipoEnemigo;
+import org.example.entidades.armas.Arma;
+import org.example.entidades.armas.Espada;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,8 @@ public class Partida {
 
         jugador1 = new Jugador(1, personaje1, 6340, 6400);
         jugador2 = new Jugador(2, personaje2, 6460, 6400);
+        jugador1.agregarArma(new Espada());
+        jugador2.agregarArma(new Espada());
         gestorEnemigos = new GestorEnemigos();
         dificultad = new DificultadPartida();
         generadorEnemigos = new GeneradorEnemigos(gestorEnemigos, dificultad);
@@ -46,6 +49,8 @@ public class Partida {
         dificultad.actualizar(delta);
         generadorEnemigos.actualizar(delta, jugador1, jugador2);
         gestorEnemigos.actualizar(delta, jugador1, jugador2);
+        jugador1.actualizarArmas(delta, gestorEnemigos);
+        jugador2.actualizarArmas(delta, gestorEnemigos);
         sistemaColisiones.actualizar(delta, jugador1, jugador2, gestorEnemigos);
     }
 
@@ -71,7 +76,22 @@ public class Partida {
 
     private String datosJugador(Jugador jugador) {
 
-        return jugador.getId() + ":" + jugador.getPosicionX() + ":" + jugador.getPosicionY() + ":" + jugador.getDireccionX() + ":" + jugador.getDireccionY() + ":" + jugador.getVida();
+        return jugador.getId() + ":" + jugador.getPosicionX() + ":" + jugador.getPosicionY() + ":" + jugador.getDireccionX() + ":" + jugador.getDireccionY() + ":" + jugador.getVida() + ":" + datosArmas(jugador);
+    }
+
+    private String datosArmas(Jugador jugador) {
+
+        StringBuilder datos = new StringBuilder();
+        List<Arma> armas = jugador.getArmas();
+        for (int i = 0; i < armas.size(); i++) {
+            Arma arma = armas.get(i);
+            if (i > 0) {
+                datos.append(";");
+            }
+            datos.append(i).append(",").append(arma.getTipo()).append(",").append(arma.getNumeroAtaque()).append(",").append(arma.getDireccionAtaque());
+        }
+
+        return datos.toString();
     }
 
 
