@@ -22,56 +22,55 @@ public class Enemigo {
         this.vida = tipo.getVidaMaxima();
     }
 
+
     public void actualizar(float delta, Jugador jugador1, Jugador jugador2) {
-
-        float distancia1 = calcularDistancia(jugador1);
-        float distancia2 = calcularDistancia(jugador2);
-
-
-        Jugador objetivo;
 
         if (!jugador1.estaVivo() && !jugador2.estaVivo()) {
             return;
         }
 
+        Jugador objetivo;
+
+        float distancia1 = calcularDistancia(jugador1);
+        float distancia2 = calcularDistancia(jugador2);
+
         if (!jugador1.estaVivo()) {
-
             objetivo = jugador2;
-
         } else if (!jugador2.estaVivo()) {
-
             objetivo = jugador1;
-
         } else if (distancia1 <= distancia2) {
-
             objetivo = jugador1;
-
         } else {
-
             objetivo = jugador2;
         }
 
+        // Centros de las hitboxes
+        float centroEnemigoX = posicionX + ANCHO_HITBOX / 2f;
+        float centroEnemigoY = posicionY + ALTO_HITBOX / 2f;
 
-        float direccionX = objetivo.getPosicionX() - posicionX;
+        float centroJugadorX = objetivo.getPosicionX() + objetivo.getAnchoHitbox() / 2f;
 
-        float direccionY = objetivo.getPosicionY() - posicionY;
+        float centroJugadorY = objetivo.getPosicionY() + objetivo.getAltoHitbox() / 2f;
+
+        float direccionX = centroJugadorX - centroEnemigoX;
+        float direccionY = centroJugadorY - centroEnemigoY;
 
         float distancia = (float) Math.sqrt(direccionX * direccionX + direccionY * direccionY);
 
-        if (distancia <= 28f) {
+        if (distancia <= 0.001f) {
             return;
         }
 
+        // Normalizar dirección
         direccionX /= distancia;
         direccionY /= distancia;
 
-        float movimiento = tipo.getVelocidad() * delta;
-
-        movimiento = Math.min(movimiento, distancia - 28f);
+        float movimiento = Math.min(tipo.getVelocidad() * delta, distancia);
 
         posicionX += direccionX * movimiento;
         posicionY += direccionY * movimiento;
     }
+
 
     private float calcularDistancia(Jugador jugador) {
 
@@ -92,6 +91,23 @@ public class Enemigo {
             vida = 0;
         }
     }
+
+
+    public void desplazarPorColision(float desplazamientoX, float desplazamientoY) {
+
+        if (!estaVivo()) {
+            return;
+        }
+
+        posicionX += desplazamientoX;
+        posicionY += desplazamientoY;
+
+        // Mantener la hitbox dentro del mapa.
+        posicionX = Math.max(0f, Math.min(12800f - ANCHO_HITBOX, posicionX));
+
+        posicionY = Math.max(0f, Math.min(12800f - ALTO_HITBOX, posicionY));
+    }
+
 
     public boolean estaVivo() {
         return vida > 0;
