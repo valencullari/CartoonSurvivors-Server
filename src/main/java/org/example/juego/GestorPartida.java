@@ -1,5 +1,7 @@
 package org.example.juego;
 
+import java.util.List;
+
 public class GestorPartida {
 
     private Partida partida;
@@ -41,13 +43,14 @@ public class GestorPartida {
         return partida.crearMensajeEstado(secuencia);
     }
 
-    public synchronized String obtenerEstadoEnemigos(long secuencia) {
+    public synchronized List<String> obtenerEstadosEnemigos(
+            long secuencia) {
 
         if (partida == null) {
             return null;
         }
 
-        return partida.crearMensajeEnemigos(secuencia);
+        return partida.crearMensajesEnemigos(secuencia);
     }
 
     public synchronized void detenerPartida() {

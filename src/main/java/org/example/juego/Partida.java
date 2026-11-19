@@ -4,7 +4,12 @@ import org.example.entidades.Jugador;
 import org.example.entidades.Enemigo;
 import org.example.entidades.TipoEnemigo;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.nio.charset.StandardCharsets;
+
 public class Partida {
+    private static final int MAX_BYTES_ENEMIGOS_POR_BLOQUE = 750;
 
     private final Jugador jugador1;
     private final Jugador jugador2;
@@ -70,20 +75,50 @@ public class Partida {
     }
 
 
-    public synchronized String crearMensajeEnemigos(long secuencia) {
+    public synchronized List<String> crearMensajesEnemigos(long secuencia) {
 
-        StringBuilder mensaje = new StringBuilder();
+        List<String> bloquesDatos = new ArrayList<>();
 
-        mensaje.append("ENEMIGOS");
-        mensaje.append("|").append(secuencia);
+        StringBuilder bloqueActual = new StringBuilder();
 
         for (Enemigo enemigo : gestorEnemigos.getEnemigos()) {
 
-            mensaje.append("|").append(enemigo.getId()).append(":").append(enemigo.getTipo().name()).append(":").append(enemigo.getPosicionX()).append(":").append(enemigo.getPosicionY()).append(":").append(enemigo.getVida());
+            String datosEnemigo = enemigo.getId() + ":" + enemigo.getTipo().name() + ":" + enemigo.getPosicionX() + ":" + enemigo.getPosicionY() + ":" + enemigo.getVida();
+
+            String entrada = "|" + datosEnemigo;
+
+            int bytesActuales = bloqueActual.toString().getBytes(StandardCharsets.UTF_8).length;
+
+            int bytesEntrada = entrada.getBytes(StandardCharsets.UTF_8).length;
+
+            if (bytesActuales + bytesEntrada > MAX_BYTES_ENEMIGOS_POR_BLOQUE && bloqueActual.length() > 0) {
+
+                bloquesDatos.add(bloqueActual.toString());
+
+                bloqueActual = new StringBuilder();
+            }
+
+            bloqueActual.append(entrada);
         }
 
-        return mensaje.toString();
+        // Agregar el último bloque.
+        // También sirve cuando no existen enemigos.
+        bloquesDatos.add(bloqueActual.toString());
+
+        List<String> mensajes = new ArrayList<>();
+
+        int totalBloques = bloquesDatos.size();
+
+        for (int i = 0; i < totalBloques; i++) {
+
+            String mensaje = "ENEMIGOS" + "|" + secuencia + "|" + i + "|" + totalBloques + bloquesDatos.get(i);
+
+            mensajes.add(mensaje);
+        }
+
+        return mensajes;
     }
+
 
     public Jugador getJugador1() {
         return jugador1;

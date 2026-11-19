@@ -30,23 +30,20 @@ public class DificultadPartida {
     }
 
     public int getMaximoEnemigos() {
-
-        // Limite temporal mientras adaptamos
-        // el protocolo para enviar muchos enemigos.
-        return 15;
+        return 200;
     }
 
     public int getCantidadPorAparicion() {
 
         if (tiempoTranscurrido < 60f) {
-            return 1;
+            return 10;
         }
 
         if (tiempoTranscurrido < 120f) {
-            return 2;
+            return 10;
         }
 
-        return 3;
+        return 10;
     }
 
     public float getTiempoTranscurrido() {

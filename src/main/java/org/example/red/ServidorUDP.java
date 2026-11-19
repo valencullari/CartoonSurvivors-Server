@@ -577,18 +577,23 @@ public class ServidorUDP {
 
         secuenciaEstado++;
 
-        // Obtener posiciones de ambos jugadores.
+        // Estado de ambos jugadores.
         String estadoJugadores = gestorPartida.obtenerEstado(secuenciaEstado);
-
-        // Obtener posición del enemigo.
-        String estadoEnemigos = gestorPartida.obtenerEstadoEnemigos(secuenciaEstado);
 
         if (estadoJugadores != null) {
             notificarJugadores(estadoJugadores);
         }
 
-        if (estadoEnemigos != null) {
-            notificarJugadores(estadoEnemigos);
+        // Estado de todos los enemigos, dividido
+        // en bloques pequeños.
+        List<String> bloquesEnemigos = gestorPartida.obtenerEstadosEnemigos(secuenciaEstado);
+
+        if (bloquesEnemigos != null) {
+
+            for (String bloque : bloquesEnemigos) {
+
+                notificarJugadores(bloque);
+            }
         }
     }
 
