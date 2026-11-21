@@ -1,6 +1,8 @@
 package org.example.entidades;
 
 import org.example.entidades.armas.Arma;
+import org.example.entidades.armas.Espada;
+import org.example.entidades.armas.Pistola;
 import java.util.ArrayList;
 import java.util.List;
 import org.example.juego.GestorEnemigos;
@@ -10,7 +12,6 @@ public class Jugador {
     private static final long TIEMPO_SIN_MOVIMIENTO = 200;
     private static final float ANCHO_HITBOX = 40f;
     private static final float ALTO_HITBOX = 60f;
-    private static final float VIDA_MAXIMA = 100f;
 
     private final int id;
     private final String personaje;
@@ -22,6 +23,8 @@ public class Jugador {
     private float direccionY;
 
     private float vida;
+    private float vidaMaxima = 100f;
+    private float regeneracion;
     private float velocidad = 200f;
     private final List<Arma> armas = new ArrayList<>();
 
@@ -37,7 +40,9 @@ public class Jugador {
         direccionX = 0;
         direccionY = 0;
 
-        vida = VIDA_MAXIMA;
+        vida = vidaMaxima;
+
+        agregarArma("MORDECAI".equals(personaje) ? new Pistola() : new Espada());
 
         ultimoMovimiento = System.currentTimeMillis();
     }
@@ -88,6 +93,7 @@ public class Jugador {
         posicionX = Math.max(0, Math.min(12060, posicionX));
 
         posicionY = Math.max(0, Math.min(12140, posicionY));
+        curar(regeneracion * delta);
     }
 
     public void recibirDanio(float cantidad) {
@@ -126,6 +132,31 @@ public class Jugador {
         velocidad += 20f;
     }
 
+    public boolean puedeDesbloquearArma() {
+        return armas.size() == 1;
+    }
+
+    public void desbloquearArma() {
+        if (puedeDesbloquearArma()) {
+            agregarArma(armas.getFirst() instanceof Espada ? new Pistola() : new Espada());
+        }
+    }
+
+    public void aumentarVidaMaxima() {
+        vidaMaxima += 20f;
+        curar(30f);
+    }
+
+    public void aumentarRegeneracion() {
+        regeneracion += 1f;
+    }
+
+    private void curar(float cantidad) {
+        if (estaVivo()) {
+            vida = Math.min(vidaMaxima, vida + cantidad);
+        }
+    }
+
     public boolean estaVivo() {
         return vida > 0f;
     }
@@ -135,7 +166,7 @@ public class Jugador {
     }
 
     public float getVidaMaxima() {
-        return VIDA_MAXIMA;
+        return vidaMaxima;
     }
 
     public int getId() {

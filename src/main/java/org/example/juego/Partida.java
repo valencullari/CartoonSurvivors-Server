@@ -3,7 +3,6 @@ package org.example.juego;
 import org.example.entidades.Jugador;
 import org.example.entidades.Enemigo;
 import org.example.entidades.armas.Arma;
-import org.example.entidades.armas.Espada;
 import org.example.entidades.armas.Pistola;
 import org.example.red.protocolo.Protocolo;
 
@@ -14,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 public class Partida {
     private static final int MAX_BYTES_ENEMIGOS_POR_BLOQUE = 750;
 
-    private final ProgresoPartida progreso = new ProgresoPartida();
+    private final ProgresoPartida progreso;
     private final Jugador jugador1;
     private final Jugador jugador2;
 
@@ -27,8 +26,7 @@ public class Partida {
 
         jugador1 = new Jugador(1, personaje1, 6300, 6400);
         jugador2 = new Jugador(2, personaje2, 6460, 6400);
-        jugador1.agregarArma("MORDECAI".equals(personaje1) ? new Pistola() : new Espada());
-        jugador2.agregarArma("MORDECAI".equals(personaje2) ? new Pistola() : new Espada());
+        progreso = new ProgresoPartida(jugador1, jugador2);
         gestorEnemigos = new GestorEnemigos();
         dificultad = new DificultadPartida();
         generadorEnemigos = new GeneradorEnemigos(gestorEnemigos, dificultad);
@@ -51,7 +49,7 @@ public class Partida {
 
     public synchronized void actualizar(float delta) {
         if (progreso.estaEnPausa()) {
-            progreso.actualizarPausa(delta, jugador1, jugador2);
+            progreso.actualizarPausa(delta);
             return;
         }
 
@@ -106,7 +104,9 @@ public class Partida {
 
     private String datosJugador(Jugador jugador) {
 
-        return jugador.getId() + ":" + jugador.getPosicionX() + ":" + jugador.getPosicionY() + ":" + jugador.getDireccionX() + ":" + jugador.getDireccionY() + ":" + jugador.getVida() + ":" + datosArmas(jugador);
+        return jugador.getId() + ":" + jugador.getPosicionX() + ":" + jugador.getPosicionY()
+            + ":" + jugador.getDireccionX() + ":" + jugador.getDireccionY() + ":" + jugador.getVida()
+            + ":" + datosArmas(jugador) + ":" + jugador.getVidaMaxima();
     }
 
     private String datosArmas(Jugador jugador) {
