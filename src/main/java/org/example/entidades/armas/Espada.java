@@ -6,14 +6,21 @@ import org.example.juego.GestorEnemigos;
 
 public class Espada extends Arma {
 
-    private static final float ALCANCE = 100f;
-    private static final float ALTO_ATAQUE = 30f;
-    private static final float SEPARACION = 5f;
+    // Las mismas dimensiones que la estela del cliente.
+    private static final float RADIO_INTERNO = 37f;
+    private static final float RADIO_EXTERNO = 92f;
+    private static final float ANGULO_BARRIDO = 110f;
+    private static final int SEGMENTOS = 20;
+    // Centro visual de la estela respecto al origen que se envía al cliente.
+    private static final float CENTRO_ESTELA_X = 30f;
+    private static final float CENTRO_ESTELA_Y = 20f;
 
-    // 0: derecha, 1: arriba-derecha,
-    // 2: arriba, 3: arriba-izquierda,
-    // 4: izquierda, 5: abajo-izquierda,
-    // 6: abajo, 7: abajo-derecha.
+    // Franja brillante exterior dibujada por el cliente.
+    private static final float RADIO_BRILLO_INTERNO = RADIO_EXTERNO - 13f;
+
+    private static final float RADIO_BRILLO_EXTERNO = RADIO_EXTERNO - 3f;
+
+    // Ocho direcciones, separadas por 45 grados.
     private int direccion = 0;
 
     public Espada() {
@@ -26,8 +33,6 @@ public class Espada extends Arma {
         float dx = jugador.getDireccionX();
         float dy = jugador.getDireccionY();
 
-        // Solo actualizar la direccion si se mueve.
-        // Si esta quieto, conservar la ultima.
         if (dx * dx + dy * dy > 0.0001f) {
 
             double angulo = Math.atan2(dy, dx);
@@ -43,25 +48,11 @@ public class Espada extends Arma {
     @Override
     protected void atacar(Jugador jugador, GestorEnemigos gestorEnemigos) {
 
-        double angulo = direccion * Math.PI / 4.0;
+        float centroX = jugador.getPosicionX() + CENTRO_ESTELA_X;
 
-        float dx = (float) Math.cos(angulo);
-        float dy = (float) Math.sin(angulo);
+        float centroY = jugador.getPosicionY() + CENTRO_ESTELA_Y;
 
-        // Centro de la hitbox del jugador.
-        float jugadorX = jugador.getPosicionX() + jugador.getAnchoHitbox() / 2f;
-
-        float jugadorY = jugador.getPosicionY() + jugador.getAltoHitbox() / 2f;
-
-        // Distancia desde el centro del jugador
-        // hasta el borde en la direccion del ataque.
-        float bordeJugador = Math.abs(dx) * jugador.getAnchoHitbox() / 2f + Math.abs(dy) * jugador.getAltoHitbox() / 2f;
-
-        // Centro de la zona de ataque.
-        float distancia = bordeJugador + SEPARACION + ALCANCE / 2f;
-
-        float ataqueX = jugadorX + dx * distancia;
-        float ataqueY = jugadorY + dy * distancia;
+        float anguloBase = direccion * 45f;
 
         for (Enemigo enemigo : gestorEnemigos.getEnemigos()) {
 
@@ -69,53 +60,150 @@ public class Espada extends Arma {
                 continue;
             }
 
-            if (colisiona(enemigo, ataqueX, ataqueY, dx, dy)) {
+            if (colisionaConEstela(enemigo, centroX, centroY, anguloBase)) {
 
                 enemigo.recibirDanio(danio);
             }
         }
     }
 
-    private boolean colisiona(Enemigo enemigo, float ataqueX, float ataqueY, float dx, float dy) {
+    private boolean colisionaConEstela(Enemigo enemigo, float centroX, float centroY, float anguloBase) {
 
-        float enemigoX = enemigo.getPosicionX() + enemigo.getAnchoHitbox() / 2f;
+        float ex = enemigo.getPosicionX();
+        float ey = enemigo.getPosicionY();
 
-        float enemigoY = enemigo.getPosicionY() + enemigo.getAltoHitbox() / 2f;
+        float ancho = enemigo.getAnchoHitbox();
+        float alto = enemigo.getAltoHitbox();
 
-        float diferenciaX = enemigoX - ataqueX;
-        float diferenciaY = enemigoY - ataqueY;
+        // Rechazo rápido si está fuera del alcance máximo.
+        float masCercanoX = Math.max(ex, Math.min(centroX, ex + ancho));
 
-        float mitadAncho = enemigo.getAnchoHitbox() / 2f;
-        float mitadAlto = enemigo.getAltoHitbox() / 2f;
+        float masCercanoY = Math.max(ey, Math.min(centroY, ey + alto));
 
-        float mitadAlcance = ALCANCE / 2f;
-        float mitadGrosor = ALTO_ATAQUE / 2f;
+        float dx = masCercanoX - centroX;
+        float dy = masCercanoY - centroY;
 
-        // Eje longitudinal de la espada.
-        float proyeccionLargo = Math.abs(diferenciaX * dx + diferenciaY * dy);
-
-        float radioLargo = Math.abs(dx) * mitadAncho + Math.abs(dy) * mitadAlto;
-
-        if (proyeccionLargo > mitadAlcance + radioLargo) {
+        if (dx * dx + dy * dy > RADIO_EXTERNO * RADIO_EXTERNO) {
             return false;
         }
 
-        // Eje perpendicular a la espada.
-        float proyeccionGrosor = Math.abs(-diferenciaX * dy + diferenciaY * dx);
+        float inicio = anguloBase - ANGULO_BARRIDO / 2f;
 
-        float radioGrosor = Math.abs(dy) * mitadAncho + Math.abs(dx) * mitadAlto;
+        // Reconstruye los triángulos de la estela
+        // que dibuja el cliente.
+        for (int i = 0; i < SEGMENTOS; i++) {
 
-        if (proyeccionGrosor > mitadGrosor + radioGrosor) {
+            float t1 = (float) i / SEGMENTOS;
+            float t2 = (float) (i + 1) / SEGMENTOS;
+
+            float a1 = inicio + ANGULO_BARRIDO * t1;
+            float a2 = inicio + ANGULO_BARRIDO * t2;
+
+            // Cuerpo principal de la estela.
+            if (colisionaSegmento(centroX, centroY, a1, a2, t1, t2, RADIO_INTERNO, RADIO_EXTERNO, ex, ey, ancho, alto)) {
+                return true;
+            }
+
+            // Franja brillante, que en algunos ángulos
+            // sobresale de la zona celeste.
+            if (colisionaSegmento(centroX, centroY, a1, a2, t1, t2, RADIO_BRILLO_INTERNO, RADIO_BRILLO_EXTERNO, ex, ey, ancho, alto)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean colisionaSegmento(float cx, float cy, float a1, float a2, float t1, float t2, float radioInterno, float radioExterno, float ex, float ey, float ancho, float alto) {
+
+        // Mismo afinamiento que dibujarEstela()
+        // del cliente.
+        float grosor1 = (float) Math.sin(Math.PI * t1);
+        float grosor2 = (float) Math.sin(Math.PI * t2);
+
+        float r1 = radioExterno + (radioInterno - radioExterno) * grosor1;
+
+        float r2 = radioExterno + (radioInterno - radioExterno) * grosor2;
+
+        double rad1 = Math.toRadians(a1);
+        double rad2 = Math.toRadians(a2);
+
+        float cos1 = (float) Math.cos(rad1);
+        float sin1 = (float) Math.sin(rad1);
+
+        float cos2 = (float) Math.cos(rad2);
+        float sin2 = (float) Math.sin(rad2);
+
+        // Cuatro vértices del segmento.
+        float x1 = cx + cos1 * radioInterno;
+        float y1 = cy + sin1 * radioInterno;
+
+        float x2 = cx + cos2 * radioInterno;
+        float y2 = cy + sin2 * radioInterno;
+
+        float x3 = cx + cos1 * r1;
+        float y3 = cy + sin1 * r1;
+
+        float x4 = cx + cos2 * r2;
+        float y4 = cy + sin2 * r2;
+
+        // Los mismos dos triángulos del renderizado.
+        return colisionaTriangulo(x1, y1, x3, y3, x2, y2, ex, ey, ancho, alto) || colisionaTriangulo(x2, y2, x3, y3, x4, y4, ex, ey, ancho, alto);
+    }
+
+    private boolean colisionaTriangulo(float x1, float y1, float x2, float y2, float x3, float y3, float ex, float ey, float ancho, float alto) {
+
+        // Separating Axis Theorem (SAT).
+        // Comprueba los ejes X e Y del rectángulo
+        // y las normales de los lados del triángulo.
+
+        if (!solapanEnEje(1f, 0f, x1, y1, x2, y2, x3, y3, ex, ey, ancho, alto)) {
             return false;
         }
 
-        // Comprobaciones en los ejes X e Y.
-        // Evitan falsos positivos en las diagonales.
-        float radioAtaqueX = Math.abs(dx) * mitadAlcance + Math.abs(dy) * mitadGrosor;
+        if (!solapanEnEje(0f, 1f, x1, y1, x2, y2, x3, y3, ex, ey, ancho, alto)) {
+            return false;
+        }
 
-        float radioAtaqueY = Math.abs(dy) * mitadAlcance + Math.abs(dx) * mitadGrosor;
+        if (!solapanEnEje(-(y2 - y1), x2 - x1, x1, y1, x2, y2, x3, y3, ex, ey, ancho, alto)) {
+            return false;
+        }
 
-        return Math.abs(diferenciaX) <= radioAtaqueX + mitadAncho && Math.abs(diferenciaY) <= radioAtaqueY + mitadAlto;
+        if (!solapanEnEje(-(y3 - y2), x3 - x2, x1, y1, x2, y2, x3, y3, ex, ey, ancho, alto)) {
+            return false;
+        }
+
+        return solapanEnEje(-(y1 - y3), x1 - x3, x1, y1, x2, y2, x3, y3, ex, ey, ancho, alto);
+    }
+
+    private boolean solapanEnEje(float ejeX, float ejeY, float x1, float y1, float x2, float y2, float x3, float y3, float ex, float ey, float ancho, float alto) {
+
+        // Ignorar ejes de lados degenerados.
+        if (ejeX * ejeX + ejeY * ejeY < 0.000001f) {
+            return true;
+        }
+
+        float p1 = x1 * ejeX + y1 * ejeY;
+        float p2 = x2 * ejeX + y2 * ejeY;
+        float p3 = x3 * ejeX + y3 * ejeY;
+
+        float minimoTriangulo = Math.min(p1, Math.min(p2, p3));
+
+        float maximoTriangulo = Math.max(p1, Math.max(p2, p3));
+
+        // Proyectar el AABB del enemigo sobre el eje.
+        float centroEnemigoX = ex + ancho / 2f;
+        float centroEnemigoY = ey + alto / 2f;
+
+        float centroProyectado = centroEnemigoX * ejeX + centroEnemigoY * ejeY;
+
+        float radioProyectado = Math.abs(ejeX) * ancho / 2f + Math.abs(ejeY) * alto / 2f;
+
+        float minimoEnemigo = centroProyectado - radioProyectado;
+
+        float maximoEnemigo = centroProyectado + radioProyectado;
+
+        return maximoTriangulo >= minimoEnemigo && maximoEnemigo >= minimoTriangulo;
     }
 
     @Override
@@ -128,4 +216,3 @@ public class Espada extends Arma {
         return direccion;
     }
 }
-
