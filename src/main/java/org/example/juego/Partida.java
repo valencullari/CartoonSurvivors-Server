@@ -79,6 +79,10 @@ public class Partida {
             + "|" + gestorEnemigos.getEnemigosEliminados();
     }
 
+    public String crearMensajePersonajes() {
+        return Protocolo.PERSONAJES + "|1:" + jugador1.getPersonaje() + "|2:" + jugador2.getPersonaje();
+    }
+
     private String datosJugador(Jugador jugador) {
 
         return jugador.getId() + ":" + jugador.getPosicionX() + ":" + jugador.getPosicionY() + ":" + jugador.getDireccionX() + ":" + jugador.getDireccionY() + ":" + jugador.getVida() + ":" + datosArmas(jugador);

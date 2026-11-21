@@ -6,7 +6,8 @@ import org.example.red.modelo.EstadoPartida;
 import java.util.List;
 
 public class EmisorEstados {
-    private static final long INTERVALO_NANOS = 1_000_000_000L / 30;
+    private static final int ESTADOS_POR_SEGUNDO = 30;
+    private static final long INTERVALO_NANOS = 1_000_000_000L / ESTADOS_POR_SEGUNDO;
     private static final int INTERVALO_HUD_EN_ESTADOS = 6;
     private final GestorPartida partida;
     private final ControladorPartida controlador;
@@ -58,6 +59,13 @@ public class EmisorEstados {
         if ((secuencia - 1) % INTERVALO_HUD_EN_ESTADOS == 0) {
             String hud = partida.obtenerEstadoHud(secuencia);
             if (hud != null && hilo == actual) emisor.enviarATodos(hud);
+        }
+        if (hilo != actual) return;
+
+        // Repetir la selección por si se perdió el mensaje del lobby.
+        if ((secuencia - 1) % ESTADOS_POR_SEGUNDO == 0) {
+            String personajes = partida.obtenerPersonajes();
+            if (personajes != null && hilo == actual) emisor.enviarATodos(personajes);
         }
         if (hilo != actual) return;
 

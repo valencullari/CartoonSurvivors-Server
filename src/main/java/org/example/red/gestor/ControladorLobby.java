@@ -51,7 +51,7 @@ public class ControladorLobby {
             return;
         ClienteConectado cliente = conexiones.buscarCliente(ip, puerto);
         if (cliente == null || cliente.isListo()) return;
-        if (!"MORDECAI".equals(personaje)) {
+        if (!"MORDECAI".equals(personaje) && !"FINN".equals(personaje)) {
             System.out.println("Personaje no valido: " + personaje);
             return;
         }

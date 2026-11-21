@@ -26,6 +26,7 @@ public class EmisorPaquetesUDP {
             if (!mensaje.equals(Protocolo.KEEP_ALIVE_OK)
                     && !mensaje.startsWith(Protocolo.ESTADO + "|")
                     && !mensaje.startsWith(Protocolo.HUD + "|")
+                    && !mensaje.startsWith(Protocolo.PERSONAJES + "|")
                     && !mensaje.startsWith(Protocolo.ENEMIGOS + "|")) {
                 System.out.println("Respuesta enviada: " + mensaje);
             }
