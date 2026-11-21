@@ -25,6 +25,7 @@ public class EmisorPaquetesUDP {
             socket.send(new DatagramPacket(datos, datos.length, ip, puerto));
             if (!mensaje.equals(Protocolo.KEEP_ALIVE_OK)
                     && !mensaje.startsWith(Protocolo.ESTADO + "|")
+                    && !mensaje.startsWith(Protocolo.HUD + "|")
                     && !mensaje.startsWith(Protocolo.ENEMIGOS + "|")) {
                 System.out.println("Respuesta enviada: " + mensaje);
             }

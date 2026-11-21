@@ -7,6 +7,7 @@ import java.util.List;
 
 public class EmisorEstados {
     private static final long INTERVALO_NANOS = 1_000_000_000L / 30;
+    private static final int INTERVALO_HUD_EN_ESTADOS = 6;
     private final GestorPartida partida;
     private final ControladorPartida controlador;
     private final EmisorPaquetesUDP emisor;
@@ -52,6 +53,12 @@ public class EmisorEstados {
 
         String jugadores = partida.obtenerEstado(secuencia);
         if (jugadores != null && hilo == actual) emisor.enviarATodos(jugadores);
+        if (hilo != actual) return;
+
+        if ((secuencia - 1) % INTERVALO_HUD_EN_ESTADOS == 0) {
+            String hud = partida.obtenerEstadoHud(secuencia);
+            if (hud != null && hilo == actual) emisor.enviarATodos(hud);
+        }
         if (hilo != actual) return;
 
         List<String> enemigos = partida.obtenerEstadosEnemigos(secuencia);

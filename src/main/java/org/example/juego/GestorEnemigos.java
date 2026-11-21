@@ -14,6 +14,11 @@ public class GestorEnemigos {
     private static final float MARGEN_SEPARACION = 0.1f;
 
     private final List<Enemigo> enemigos;
+    private int enemigosEliminados;
+
+    public int getEnemigosEliminados() {
+        return enemigosEliminados;
+    }
     private int siguienteId;
 
     public GestorEnemigos() {
@@ -38,6 +43,7 @@ public class GestorEnemigos {
 
             if (!enemigo.estaVivo()) {
                 enemigos.remove(i);
+                enemigosEliminados++;
                 continue;
             }
 

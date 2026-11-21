@@ -4,6 +4,7 @@ import org.example.entidades.Jugador;
 import org.example.entidades.Enemigo;
 import org.example.entidades.armas.Arma;
 import org.example.entidades.armas.Espada;
+import org.example.red.protocolo.Protocolo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,7 @@ public class Partida {
 
     public Partida(String personaje1, String personaje2) {
 
-        jugador1 = new Jugador(1, personaje1, 11800, 6400);
+        jugador1 = new Jugador(1, personaje1, 6300, 6400);
         jugador2 = new Jugador(2, personaje2, 6460, 6400);
         jugador1.agregarArma(new Espada());
         jugador2.agregarArma(new Espada());
@@ -73,6 +74,10 @@ public class Partida {
         return "ESTADO|" + secuencia + "|" + datosJugador(jugador1) + "|" + datosJugador(jugador2);
     }
 
+    public synchronized String crearMensajeHud(long secuencia) {
+        return Protocolo.HUD + "|" + secuencia + "|" + (int) dificultad.getTiempoTranscurrido()
+            + "|" + gestorEnemigos.getEnemigosEliminados();
+    }
 
     private String datosJugador(Jugador jugador) {
 

@@ -43,6 +43,10 @@ public class GestorPartida {
         return partida.crearMensajeEstado(secuencia);
     }
 
+    public synchronized String obtenerEstadoHud(long secuencia) {
+        return partida == null ? null : partida.crearMensajeHud(secuencia);
+    }
+
     public synchronized List<String> obtenerEstadosEnemigos(
             long secuencia) {
 
