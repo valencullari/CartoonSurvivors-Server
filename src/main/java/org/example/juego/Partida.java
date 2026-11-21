@@ -48,6 +48,8 @@ public class Partida {
 
 
     public synchronized void actualizar(float delta) {
+        jugador1.actualizarReaparicion(delta);
+        jugador2.actualizarReaparicion(delta);
         if (progreso.estaEnPausa()) {
             progreso.actualizarPausa(delta);
             return;
@@ -106,7 +108,8 @@ public class Partida {
 
         return jugador.getId() + ":" + jugador.getPosicionX() + ":" + jugador.getPosicionY()
             + ":" + jugador.getDireccionX() + ":" + jugador.getDireccionY() + ":" + jugador.getVida()
-            + ":" + datosArmas(jugador) + ":" + jugador.getVidaMaxima();
+            + ":" + datosArmas(jugador) + ":" + jugador.getVidaMaxima()
+            + ":" + jugador.getSegundosParaReaparecer();
     }
 
     private String datosArmas(Jugador jugador) {

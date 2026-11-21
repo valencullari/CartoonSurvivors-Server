@@ -10,6 +10,7 @@ import org.example.juego.GestorEnemigos;
 public class Jugador {
 
     private static final long TIEMPO_SIN_MOVIMIENTO = 200;
+    private static final int SEGUNDOS_REAPARICION = 30;
     private static final float ANCHO_HITBOX = 40f;
     private static final float ALTO_HITBOX = 60f;
 
@@ -24,6 +25,7 @@ public class Jugador {
 
     private float vida;
     private float vidaMaxima = 100f;
+    private double tiempoReaparicion;
     private float regeneracion;
     private float velocidad = 200f;
     private final List<Arma> armas = new ArrayList<>();
@@ -76,8 +78,6 @@ public class Jugador {
     public void actualizar(float delta) {
 
         if (!estaVivo()) {
-            direccionX = 0;
-            direccionY = 0;
             return;
         }
 
@@ -103,6 +103,24 @@ public class Jugador {
         }
 
         vida = Math.max(0f, vida - cantidad);
+        if (!estaVivo()) {
+            direccionX = 0f;
+            direccionY = 0f;
+            tiempoReaparicion = SEGUNDOS_REAPARICION;
+        }
+    }
+
+    public void actualizarReaparicion(float delta) {
+        if (!estaVivo()) {
+            tiempoReaparicion = Math.max(0, tiempoReaparicion - delta);
+            if (tiempoReaparicion == 0) {
+                vida = vidaMaxima;
+            }
+        }
+    }
+
+    public int getSegundosParaReaparecer() {
+        return (int) Math.ceil(tiempoReaparicion);
     }
 
     public void agregarArma(Arma arma) {

@@ -14,16 +14,23 @@ final class ProgresoPartida {
     private enum Mejora {
         DANIO, ALCANCE, CADENCIA, VELOCIDAD, ARMA, VIDA_MAXIMA, REGENERACION;
 
+    }
+
+    private record Opcion(Mejora mejora, Arma arma) {
         void aplicar(Jugador jugador) {
-            switch (this) {
-                case DANIO -> jugador.getArmas().forEach(Arma::aumentarDanio);
-                case ALCANCE -> jugador.getArmas().forEach(Arma::aumentarAlcance);
-                case CADENCIA -> jugador.getArmas().forEach(Arma::aumentarCadencia);
+            switch (mejora) {
+                case DANIO -> arma.aumentarDanio();
+                case ALCANCE -> arma.aumentarAlcance();
+                case CADENCIA -> arma.aumentarCadencia();
                 case VELOCIDAD -> jugador.aumentarVelocidad();
                 case ARMA -> jugador.desbloquearArma();
                 case VIDA_MAXIMA -> jugador.aumentarVidaMaxima();
                 case REGENERACION -> jugador.aumentarRegeneracion();
             }
+        }
+
+        String codigo() {
+            return arma == null ? mejora.name() : mejora.name() + "_" + arma.getTipo();
         }
     }
 
@@ -31,7 +38,7 @@ final class ProgresoPartida {
     private final List<Jugador> jugadores;
     private final int[] elecciones = new int[2];
     private final int[] revisiones = new int[2];
-    private List<List<Mejora>> opciones = List.of();
+    private List<List<Opcion>> opciones = List.of();
     private float tiempoRestante;
     private int nivel = 1;
     private int experiencia;
@@ -95,10 +102,18 @@ final class ProgresoPartida {
         tiempoRestante = DURACION_MEJORAS;
     }
 
-    private List<Mejora> sortearOpciones(Jugador jugador) {
-        List<Mejora> candidatas = new ArrayList<>(List.of(Mejora.values()));
-        if (!jugador.puedeDesbloquearArma()) {
-            candidatas.remove(Mejora.ARMA);
+    private List<Opcion> sortearOpciones(Jugador jugador) {
+        List<Opcion> candidatas = new ArrayList<>();
+        for (Arma arma : jugador.getArmas()) {
+            candidatas.add(new Opcion(Mejora.DANIO, arma));
+            candidatas.add(new Opcion(Mejora.ALCANCE, arma));
+            candidatas.add(new Opcion(Mejora.CADENCIA, arma));
+        }
+        candidatas.add(new Opcion(Mejora.VELOCIDAD, null));
+        candidatas.add(new Opcion(Mejora.VIDA_MAXIMA, null));
+        candidatas.add(new Opcion(Mejora.REGENERACION, null));
+        if (jugador.puedeDesbloquearArma()) {
+            candidatas.add(new Opcion(Mejora.ARMA, null));
         }
         Collections.shuffle(candidatas);
         return candidatas.subList(0, 3);
@@ -119,7 +134,7 @@ final class ProgresoPartida {
             + "|" + elecciones[0] + "," + revisiones[0] + "|" + elecciones[1] + "," + revisiones[1];
     }
 
-    private String datosOpciones(List<Mejora> lista) {
-        return String.join(",", lista.stream().map(Mejora::name).toList());
+    private String datosOpciones(List<Opcion> lista) {
+        return String.join(",", lista.stream().map(Opcion::codigo).toList());
     }
 }
