@@ -22,6 +22,7 @@ public class Espada extends Arma {
 
     // Ocho direcciones, separadas por 45 grados.
     private int direccion = 0;
+    private int direccionAtaque;
 
     public Espada() {
         super(25, 1.0f);
@@ -52,7 +53,8 @@ public class Espada extends Arma {
 
         float centroY = jugador.getPosicionY() + CENTRO_ESTELA_Y;
 
-        float anguloBase = direccion * 45f;
+        direccionAtaque = direccion;
+        float anguloBase = direccionAtaque * 45f;
 
         for (Enemigo enemigo : gestorEnemigos.getEnemigos()) {
 
@@ -83,7 +85,8 @@ public class Espada extends Arma {
         float dx = masCercanoX - centroX;
         float dy = masCercanoY - centroY;
 
-        if (dx * dx + dy * dy > RADIO_EXTERNO * RADIO_EXTERNO) {
+        float radioMaximo = RADIO_EXTERNO * getAlcanceAtaque();
+        if (dx * dx + dy * dy > radioMaximo * radioMaximo) {
             return false;
         }
 
@@ -118,6 +121,9 @@ public class Espada extends Arma {
 
         // Mismo afinamiento que dibujarEstela()
         // del cliente.
+        radioInterno *= getAlcanceAtaque();
+        radioExterno *= getAlcanceAtaque();
+
         float grosor1 = (float) Math.sin(Math.PI * t1);
         float grosor2 = (float) Math.sin(Math.PI * t2);
 
@@ -213,6 +219,6 @@ public class Espada extends Arma {
 
     @Override
     public int getDireccionAtaque() {
-        return direccion;
+        return direccionAtaque;
     }
 }

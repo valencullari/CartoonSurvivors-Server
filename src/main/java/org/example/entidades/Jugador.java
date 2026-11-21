@@ -7,7 +7,6 @@ import org.example.juego.GestorEnemigos;
 
 public class Jugador {
 
-    private static final float VELOCIDAD = 200f;
     private static final long TIEMPO_SIN_MOVIMIENTO = 200;
     private static final float ANCHO_HITBOX = 40f;
     private static final float ALTO_HITBOX = 60f;
@@ -23,6 +22,7 @@ public class Jugador {
     private float direccionY;
 
     private float vida;
+    private float velocidad = 200f;
     private final List<Arma> armas = new ArrayList<>();
 
     private long ultimoMovimiento;
@@ -82,8 +82,8 @@ public class Jugador {
             direccionY = 0;
         }
 
-        posicionX += direccionX * VELOCIDAD * delta;
-        posicionY += direccionY * VELOCIDAD * delta;
+        posicionX += direccionX * velocidad * delta;
+        posicionY += direccionY * velocidad * delta;
 
         posicionX = Math.max(0, Math.min(12060, posicionX));
 
@@ -121,6 +121,10 @@ public class Jugador {
         }
     }
 
+
+    public void aumentarVelocidad() {
+        velocidad += 20f;
+    }
 
     public boolean estaVivo() {
         return vida > 0f;

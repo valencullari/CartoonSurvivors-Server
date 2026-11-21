@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 public class Partida {
     private static final int MAX_BYTES_ENEMIGOS_POR_BLOQUE = 750;
 
+    private final ProgresoPartida progreso = new ProgresoPartida();
     private final Jugador jugador1;
     private final Jugador jugador2;
 
@@ -35,6 +36,10 @@ public class Partida {
 
     public synchronized void moverJugador(int id, float direccionX, float direccionY) {
 
+        if (progreso.estaEnPausa()) {
+            return;
+        }
+
         Jugador jugador = obtenerJugador(id);
 
         if (jugador != null) {
@@ -44,15 +49,26 @@ public class Partida {
 
 
     public synchronized void actualizar(float delta) {
+        if (progreso.estaEnPausa()) {
+            progreso.actualizarPausa(delta, jugador1, jugador2);
+            return;
+        }
 
         jugador1.actualizar(delta);
         jugador2.actualizar(delta);
         dificultad.actualizar(delta);
         generadorEnemigos.actualizar(delta, jugador1, jugador2);
+        int bajasAnteriores = gestorEnemigos.getEnemigosEliminados();
         gestorEnemigos.actualizar(delta, jugador1, jugador2);
         jugador1.actualizarArmas(delta, gestorEnemigos);
         jugador2.actualizarArmas(delta, gestorEnemigos);
         sistemaColisiones.actualizar(delta, jugador1, jugador2, gestorEnemigos);
+        progreso.agregarExperiencia(gestorEnemigos.getEnemigosEliminados() - bajasAnteriores);
+
+        if (progreso.estaEnPausa()) {
+            jugador1.establecerMovimiento(0f, 0f);
+            jugador2.establecerMovimiento(0f, 0f);
+        }
     }
 
 
@@ -76,7 +92,11 @@ public class Partida {
 
     public synchronized String crearMensajeHud(long secuencia) {
         return Protocolo.HUD + "|" + secuencia + "|" + (int) dificultad.getTiempoTranscurrido()
-            + "|" + gestorEnemigos.getEnemigosEliminados();
+            + "|" + gestorEnemigos.getEnemigosEliminados() + "|" + progreso.datosHud();
+    }
+
+    public synchronized void elegirMejora(int id, String partidaId, int nivel, int revision, int opcion) {
+        progreso.elegirMejora(id, partidaId, nivel, revision, opcion);
     }
 
     public String crearMensajePersonajes() {
@@ -97,7 +117,8 @@ public class Partida {
             if (i > 0) {
                 datos.append(";");
             }
-            datos.append(i).append(",").append(arma.getTipo()).append(",").append(arma.getNumeroAtaque()).append(",").append(arma.getDireccionAtaque());
+            datos.append(i).append(",").append(arma.getTipo()).append(",").append(arma.getNumeroAtaque()).append(",").append(arma.getDireccionAtaque())
+                .append(",").append(arma.getAlcanceAtaque());
         }
 
         return datos.toString();

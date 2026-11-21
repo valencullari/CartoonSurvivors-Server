@@ -17,6 +17,22 @@ public class ControladorMovimiento {
         this.partida = partida;
     }
 
+    public void procesarMejora(String mensaje, InetAddress ip, int puerto) {
+        if (estado.getEstado() != EstadoPartida.EN_CURSO) return;
+        ClienteConectado cliente = conexiones.buscarCliente(ip, puerto);
+        if (cliente == null) return;
+        String[] partes = mensaje.split("\\|", -1);
+        if (partes.length != 5) return;
+        try {
+            int nivel = Integer.parseInt(partes[2]);
+            int revision = Integer.parseInt(partes[3]);
+            int opcion = Integer.parseInt(partes[4]);
+            partida.elegirMejora(cliente.getId(), partes[1], nivel, revision, opcion);
+        } catch (NumberFormatException e) {
+            System.out.println("Seleccion de mejora invalida: " + mensaje);
+        }
+    }
+
     public void procesar(String mensaje, InetAddress ip, int puerto) {
         if (estado.getEstado() != EstadoPartida.EN_CURSO) return;
         ClienteConectado cliente = conexiones.buscarCliente(ip, puerto);

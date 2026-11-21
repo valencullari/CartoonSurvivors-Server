@@ -34,6 +34,12 @@ public class GestorPartida {
         partida.moverJugador(idJugador, direccionX, direccionY);
     }
 
+    public synchronized void elegirMejora(int jugador, String partidaId, int nivel, int revision, int opcion) {
+        if (partida != null) {
+            partida.elegirMejora(jugador, partidaId, nivel, revision, opcion);
+        }
+    }
+
     public synchronized String obtenerEstado(long secuencia) {
 
         if (partida == null) {

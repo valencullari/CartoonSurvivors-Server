@@ -5,10 +5,12 @@ import org.example.juego.GestorEnemigos;
 
 public abstract class Arma {
 
-    protected final int danio;
-    protected final float cooldown;
+    protected int danio;
+    private float cooldown;
 
     private float tiempoRestante;
+    private float alcance = 1f;
+    private float alcanceAtaque = 1f;
     private long numeroAtaque;
 
     public Arma(int danio, float cooldown) {
@@ -32,6 +34,7 @@ public abstract class Arma {
 
         tiempoRestante = cooldown;
         numeroAtaque++;
+        alcanceAtaque = alcance;
 
         atacar(jugador, gestorEnemigos);
     }
@@ -46,6 +49,22 @@ public abstract class Arma {
 
     public long getNumeroAtaque() {
         return numeroAtaque;
+    }
+
+    public void aumentarDanio() {
+        danio += 5;
+    }
+
+    public void aumentarCadencia() {
+        cooldown *= 0.9f;
+    }
+
+    public void aumentarAlcance() {
+        alcance += 0.15f;
+    }
+
+    public float getAlcanceAtaque() {
+        return alcanceAtaque;
     }
 
     public int getDanio() {
