@@ -4,6 +4,7 @@ import org.example.entidades.Jugador;
 import org.example.entidades.Enemigo;
 import org.example.entidades.armas.Arma;
 import org.example.entidades.armas.Espada;
+import org.example.entidades.armas.Pistola;
 import org.example.red.protocolo.Protocolo;
 
 import java.util.ArrayList;
@@ -26,8 +27,8 @@ public class Partida {
 
         jugador1 = new Jugador(1, personaje1, 6300, 6400);
         jugador2 = new Jugador(2, personaje2, 6460, 6400);
-        jugador1.agregarArma(new Espada());
-        jugador2.agregarArma(new Espada());
+        jugador1.agregarArma("MORDECAI".equals(personaje1) ? new Pistola() : new Espada());
+        jugador2.agregarArma("MORDECAI".equals(personaje2) ? new Pistola() : new Espada());
         gestorEnemigos = new GestorEnemigos();
         dificultad = new DificultadPartida();
         generadorEnemigos = new GeneradorEnemigos(gestorEnemigos, dificultad);
@@ -119,6 +120,9 @@ public class Partida {
             }
             datos.append(i).append(",").append(arma.getTipo()).append(",").append(arma.getNumeroAtaque()).append(",").append(arma.getDireccionAtaque())
                 .append(",").append(arma.getAlcanceAtaque());
+            if (arma instanceof Pistola pistola) {
+                datos.append(",").append(pistola.getOrigenX()).append(",").append(pistola.getOrigenY());
+            }
         }
 
         return datos.toString();

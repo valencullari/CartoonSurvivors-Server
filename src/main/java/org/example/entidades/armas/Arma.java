@@ -12,6 +12,8 @@ public abstract class Arma {
     private float alcance = 1f;
     private float alcanceAtaque = 1f;
     private long numeroAtaque;
+    private int direccion;
+    private int direccionAtaque;
 
     public Arma(int danio, float cooldown) {
         this.danio = danio;
@@ -26,6 +28,13 @@ public abstract class Arma {
             return;
         }
 
+        float dx = jugador.getDireccionX();
+        float dy = jugador.getDireccionY();
+        if (dx * dx + dy * dy > 0.0001f) {
+            int sector = (int) Math.round(Math.atan2(dy, dx) / (Math.PI / 4.0));
+            direccion = Math.floorMod(sector, 8);
+        }
+
         tiempoRestante -= delta;
 
         if (tiempoRestante > 0f) {
@@ -35,6 +44,7 @@ public abstract class Arma {
         tiempoRestante = cooldown;
         numeroAtaque++;
         alcanceAtaque = alcance;
+        direccionAtaque = direccion;
 
         atacar(jugador, gestorEnemigos);
     }
@@ -44,7 +54,7 @@ public abstract class Arma {
     public abstract String getTipo();
 
     public int getDireccionAtaque() {
-        return 0;
+        return direccionAtaque;
     }
 
     public long getNumeroAtaque() {

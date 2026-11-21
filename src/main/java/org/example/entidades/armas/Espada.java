@@ -20,30 +20,8 @@ public class Espada extends Arma {
 
     private static final float RADIO_BRILLO_EXTERNO = RADIO_EXTERNO - 3f;
 
-    // Ocho direcciones, separadas por 45 grados.
-    private int direccion = 0;
-    private int direccionAtaque;
-
     public Espada() {
         super(25, 1.0f);
-    }
-
-    @Override
-    public void actualizar(float delta, Jugador jugador, GestorEnemigos gestorEnemigos) {
-
-        float dx = jugador.getDireccionX();
-        float dy = jugador.getDireccionY();
-
-        if (dx * dx + dy * dy > 0.0001f) {
-
-            double angulo = Math.atan2(dy, dx);
-
-            int sector = (int) Math.round(angulo / (Math.PI / 4.0));
-
-            direccion = Math.floorMod(sector, 8);
-        }
-
-        super.actualizar(delta, jugador, gestorEnemigos);
     }
 
     @Override
@@ -53,8 +31,7 @@ public class Espada extends Arma {
 
         float centroY = jugador.getPosicionY() + CENTRO_ESTELA_Y;
 
-        direccionAtaque = direccion;
-        float anguloBase = direccionAtaque * 45f;
+        float anguloBase = getDireccionAtaque() * 45f;
 
         for (Enemigo enemigo : gestorEnemigos.getEnemigos()) {
 
@@ -215,10 +192,5 @@ public class Espada extends Arma {
     @Override
     public String getTipo() {
         return "ESPADA";
-    }
-
-    @Override
-    public int getDireccionAtaque() {
-        return direccionAtaque;
     }
 }
