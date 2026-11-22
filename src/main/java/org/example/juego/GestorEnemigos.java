@@ -27,12 +27,13 @@ public class GestorEnemigos {
         siguienteId = 1;
     }
 
-    public void crearEnemigo(TipoEnemigo tipo, float posicionX, float posicionY, int vidaExtra) {
+    public Enemigo crearEnemigo(TipoEnemigo tipo, float posicionX, float posicionY, int vidaExtra) {
 
         Enemigo enemigo = new Enemigo(siguienteId, tipo, posicionX, posicionY, vidaExtra);
 
         enemigos.add(enemigo);
         siguienteId++;
+        return enemigo;
     }
 
     public void actualizar(float delta, Jugador jugador1, Jugador jugador2) {

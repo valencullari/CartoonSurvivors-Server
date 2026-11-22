@@ -35,7 +35,7 @@ public class Partida {
 
     public synchronized void moverJugador(int id, float direccionX, float direccionY) {
 
-        if (dificultad.termino() || progreso.estaEnPausa()) {
+        if (progreso.estaEnPausa()) {
             return;
         }
 
@@ -48,32 +48,46 @@ public class Partida {
 
 
     public synchronized void actualizar(float delta) {
-        if (dificultad.termino()) {
-            return;
+        boolean faseFinal = dificultad.estaEnFaseFinal();
+        if (faseFinal) {
+            if (!jugador1.estaVivo() && !jugador2.estaVivo()) {
+                return;
+            }
+        } else {
+            jugador1.actualizarReaparicion(delta);
+            jugador2.actualizarReaparicion(delta);
         }
-        jugador1.actualizarReaparicion(delta);
-        jugador2.actualizarReaparicion(delta);
         if (progreso.estaEnPausa()) {
             progreso.actualizarPausa(delta);
             return;
         }
 
         dificultad.actualizar(delta);
-        if (dificultad.termino()) {
-            jugador1.establecerMovimiento(0f, 0f);
-            jugador2.establecerMovimiento(0f, 0f);
-            return;
+        if (dificultad.estaEnFaseFinal() && !faseFinal) {
+            if (!jugador1.estaVivo()) {
+                jugador1.reaparecer();
+            }
+            if (!jugador2.estaVivo()) {
+                jugador2.reaparecer();
+            }
+            faseFinal = true;
         }
 
         jugador1.actualizar(delta);
         jugador2.actualizar(delta);
-        generadorEnemigos.actualizar(delta, jugador1, jugador2);
+        if (faseFinal) {
+            generadorEnemigos.actualizarFaseFinal(jugador1, jugador2);
+        } else {
+            generadorEnemigos.actualizar(delta, jugador1, jugador2);
+        }
         int bajasAnteriores = gestorEnemigos.getEnemigosEliminados();
         gestorEnemigos.actualizar(delta, jugador1, jugador2);
         jugador1.actualizarArmas(delta, gestorEnemigos);
         jugador2.actualizarArmas(delta, gestorEnemigos);
         sistemaColisiones.actualizar(delta, jugador1, jugador2, gestorEnemigos);
-        progreso.agregarExperiencia(gestorEnemigos.getEnemigosEliminados() - bajasAnteriores);
+        if (!faseFinal) {
+            progreso.agregarExperiencia(gestorEnemigos.getEnemigosEliminados() - bajasAnteriores);
+        }
 
         if (progreso.estaEnPausa()) {
             jugador1.establecerMovimiento(0f, 0f);
@@ -103,7 +117,23 @@ public class Partida {
     public synchronized String crearMensajeHud(long secuencia) {
         return Protocolo.HUD + "|" + secuencia + "|" + dificultad.getTiempoTranscurrido()
             + "|" + gestorEnemigos.getEnemigosEliminados() + "|" + progreso.datosHud()
-            + (dificultad.termino() ? "|VICTORIA" : "");
+            + resultadoFaseFinal();
+    }
+
+    private String resultadoFaseFinal() {
+        if (!dificultad.estaEnFaseFinal()) {
+            return "";
+        }
+        if (!jugador1.estaVivo() && !jugador2.estaVivo()) {
+            return "|VICTORIA";
+        }
+        if (!jugador1.estaVivo()) {
+            return "|VICTORIA_1";
+        }
+        if (!jugador2.estaVivo()) {
+            return "|VICTORIA_2";
+        }
+        return "|FASE_FINAL";
     }
 
     public synchronized void elegirMejora(int id, String partidaId, int nivel, int revision, int opcion) {

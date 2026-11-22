@@ -114,9 +114,14 @@ public class Jugador {
         if (!estaVivo()) {
             tiempoReaparicion = Math.max(0, tiempoReaparicion - delta);
             if (tiempoReaparicion == 0) {
-                vida = vidaMaxima;
+                reaparecer();
             }
         }
+    }
+
+    public void reaparecer() {
+        vida = vidaMaxima;
+        tiempoReaparicion = 0;
     }
 
     public int getSegundosParaReaparecer() {

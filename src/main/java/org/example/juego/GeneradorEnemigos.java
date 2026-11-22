@@ -1,5 +1,6 @@
 package org.example.juego;
 
+import org.example.entidades.Enemigo;
 import org.example.entidades.Jugador;
 import org.example.entidades.TipoEnemigo;
 
@@ -21,6 +22,7 @@ public class GeneradorEnemigos {
 
     private float tiempoAparicion;
     private int siguienteJefe = PRIMER_JEFE;
+    private Enemigo muerte;
 
     public GeneradorEnemigos(GestorEnemigos gestorEnemigos, DificultadPartida dificultad) {
 
@@ -68,7 +70,13 @@ public class GeneradorEnemigos {
         }
     }
 
-    private void generarEnemigo(TipoEnemigo tipo, int vidaExtra, Jugador jugador1, Jugador jugador2) {
+    public void actualizarFaseFinal(Jugador jugador1, Jugador jugador2) {
+        if (muerte == null || !muerte.estaVivo()) {
+            muerte = generarEnemigo(TipoEnemigo.MUERTE, 0, jugador1, jugador2);
+        }
+    }
+
+    private Enemigo generarEnemigo(TipoEnemigo tipo, int vidaExtra, Jugador jugador1, Jugador jugador2) {
 
         // Elegir aleatoriamente un jugador
         // alrededor del cual aparecerá el enemigo.
@@ -101,6 +109,6 @@ public class GeneradorEnemigos {
         posicionY = Math.max(0, Math.min(ALTO_MAPA - Math.max(60f, tipo.getAltoHitbox()), posicionY));
 
         // Crear el enemigo mediante el gestor.
-        gestorEnemigos.crearEnemigo(tipo, posicionX, posicionY, vidaExtra);
+        return gestorEnemigos.crearEnemigo(tipo, posicionX, posicionY, vidaExtra);
     }
 }
