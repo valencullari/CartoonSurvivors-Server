@@ -7,6 +7,8 @@ import java.util.Random;
 
 public class GeneradorEnemigos {
 
+    private static final int PRIMER_JEFE = 20;
+    private static final int INTERVALO_JEFE = 45;
     private static final float DISTANCIA_MINIMA = 350f;
     private static final float DISTANCIA_MAXIMA = 550f;
 
@@ -18,6 +20,7 @@ public class GeneradorEnemigos {
     private final Random random;
 
     private float tiempoAparicion;
+    private int siguienteJefe = PRIMER_JEFE;
 
     public GeneradorEnemigos(GestorEnemigos gestorEnemigos, DificultadPartida dificultad) {
 
@@ -30,9 +33,20 @@ public class GeneradorEnemigos {
 
     public void actualizar(float delta, Jugador jugador1, Jugador jugador2) {
 
+        if (!jugador1.estaVivo() && !jugador2.estaVivo()) {
+            return;
+        }
+
+        DificultadPartida.Etapa etapa = dificultad.getEtapa();
+        int tiempo = dificultad.getTiempoTranscurrido();
+        if (tiempo >= siguienteJefe && gestorEnemigos.cantidadJefesVivos() < etapa.maximoJefes()) {
+            generarEnemigo(TipoEnemigo.JEFE, etapa.vidaExtraJefe(), jugador1, jugador2);
+            siguienteJefe = tiempo + INTERVALO_JEFE;
+        }
+
         tiempoAparicion += delta;
 
-        float intervalo = dificultad.getIntervaloAparicion();
+        float intervalo = etapa.intervalo();
 
         if (tiempoAparicion < intervalo) {
             return;
@@ -40,9 +54,9 @@ public class GeneradorEnemigos {
 
         tiempoAparicion -= intervalo;
 
-        int maximo = dificultad.getMaximoEnemigos();
+        int maximo = etapa.maximo();
 
-        int cantidad = dificultad.getCantidadPorAparicion();
+        int cantidad = etapa.cantidad();
 
         for (int i = 0; i < cantidad; i++) {
 
@@ -50,11 +64,11 @@ public class GeneradorEnemigos {
                 break;
             }
 
-            generarEnemigo(jugador1, jugador2);
+            generarEnemigo(TipoEnemigo.BASICO, etapa.vidaExtraBasico(), jugador1, jugador2);
         }
     }
 
-    private void generarEnemigo(Jugador jugador1, Jugador jugador2) {
+    private void generarEnemigo(TipoEnemigo tipo, int vidaExtra, Jugador jugador1, Jugador jugador2) {
 
         // Elegir aleatoriamente un jugador
         // alrededor del cual aparecerá el enemigo.
@@ -65,6 +79,10 @@ public class GeneradorEnemigos {
             referencia = jugador1;
         } else {
             referencia = jugador2;
+        }
+
+        if (!referencia.estaVivo()) {
+            referencia = referencia == jugador1 ? jugador2 : jugador1;
         }
 
         // Elegir una distancia aleatoria.
@@ -78,11 +96,11 @@ public class GeneradorEnemigos {
         float posicionY = referencia.getPosicionY() + (float) Math.sin(angulo) * distancia;
 
         // Mantener la aparición dentro del mapa.
-        posicionX = Math.max(0, Math.min(ANCHO_MAPA - 40, posicionX));
+        posicionX = Math.max(0, Math.min(ANCHO_MAPA - Math.max(40f, tipo.getAnchoHitbox()), posicionX));
 
-        posicionY = Math.max(0, Math.min(ALTO_MAPA - 60, posicionY));
+        posicionY = Math.max(0, Math.min(ALTO_MAPA - Math.max(60f, tipo.getAltoHitbox()), posicionY));
 
         // Crear el enemigo mediante el gestor.
-        gestorEnemigos.crearEnemigo(TipoEnemigo.BASICO, posicionX, posicionY);
+        gestorEnemigos.crearEnemigo(tipo, posicionX, posicionY, vidaExtra);
     }
 }

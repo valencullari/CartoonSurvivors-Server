@@ -14,6 +14,7 @@ public class GestorEnemigos {
     private static final float MARGEN_SEPARACION = 0.1f;
 
     private final List<Enemigo> enemigos;
+    private final AtaqueFuego ataqueFuego = new AtaqueFuego();
     private int enemigosEliminados;
 
     public int getEnemigosEliminados() {
@@ -26,15 +27,17 @@ public class GestorEnemigos {
         siguienteId = 1;
     }
 
-    public void crearEnemigo(TipoEnemigo tipo, float posicionX, float posicionY) {
+    public void crearEnemigo(TipoEnemigo tipo, float posicionX, float posicionY, int vidaExtra) {
 
-        Enemigo enemigo = new Enemigo(siguienteId, tipo, posicionX, posicionY);
+        Enemigo enemigo = new Enemigo(siguienteId, tipo, posicionX, posicionY, vidaExtra);
 
         enemigos.add(enemigo);
         siguienteId++;
     }
 
     public void actualizar(float delta, Jugador jugador1, Jugador jugador2) {
+
+        ataqueFuego.actualizar(delta, jugador1, jugador2);
 
         // 1. Eliminar muertos y actualizar movimiento.
         for (int i = enemigos.size() - 1; i >= 0; i--) {
@@ -49,6 +52,9 @@ public class GestorEnemigos {
 
 
             enemigo.actualizar(delta, jugador1, jugador2);
+            if (enemigo.getTipo() == TipoEnemigo.JEFE) {
+                ataqueFuego.intentarLanzar(enemigo, enemigo.elegirObjetivo(jugador1, jugador2));
+            }
             enemigo.actualizarRetroceso(delta);
 
 
@@ -139,6 +145,14 @@ public class GestorEnemigos {
 
     public List<Enemigo> getEnemigos() {
         return Collections.unmodifiableList(enemigos);
+    }
+
+    public long cantidadJefesVivos() {
+        return enemigos.stream().filter(enemigo -> enemigo.getTipo() == TipoEnemigo.JEFE && enemigo.estaVivo()).count();
+    }
+
+    AtaqueFuego getAtaqueFuego() {
+        return ataqueFuego;
     }
 
     public int cantidadEnemigos() {

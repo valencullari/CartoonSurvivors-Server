@@ -2,51 +2,42 @@ package org.example.juego;
 
 public class DificultadPartida {
 
-    private float tiempoTranscurrido;
+    private static final int DURACION_PARTIDA = 600;
+    private static final int DURACION_ETAPA = 60;
 
-    public DificultadPartida() {
-        tiempoTranscurrido = 0;
-    }
+    private static final Etapa[] ETAPAS = {
+            new Etapa(3.2f, 10, 300, 0, 0, 2),
+            new Etapa(2.8f, 12, 400, 20, 50, 2),
+            new Etapa(2.4f, 13, 500, 30, 100, 3),
+            new Etapa(2.1f, 15, 500, 40, 150, 3),
+            new Etapa(2f, 17, 500, 50, 200, 4),
+            new Etapa(2f, 17, 600, 60, 200, 4),
+            new Etapa(2f, 18, 600, 70, 250, 4),
+            new Etapa(2f, 19, 700, 80, 300, 5),
+            new Etapa(2f, 20, 700, 90, 350, 5),
+            new Etapa(2f, 20, 700, 100, 400, 5),
+    };
+
+    private double tiempoTranscurrido;
 
     public void actualizar(float delta) {
-        tiempoTranscurrido += delta;
+        tiempoTranscurrido = Math.min(DURACION_PARTIDA, tiempoTranscurrido + delta);
     }
 
-    public float getIntervaloAparicion() {
-
-        if (tiempoTranscurrido < 30f) {
-            return 3f;
-        }
-
-        if (tiempoTranscurrido < 60f) {
-            return 2f;
-        }
-
-        if (tiempoTranscurrido < 120f) {
-            return 1f;
-        }
-
-        return 0.5f;
+    public Etapa getEtapa() {
+        int indice = (int) tiempoTranscurrido / DURACION_ETAPA;
+        return ETAPAS[Math.min(indice, ETAPAS.length - 1)];
     }
 
-    public int getMaximoEnemigos() {
-        return 200;
+    public int getTiempoTranscurrido() {
+        return (int) tiempoTranscurrido;
     }
 
-    public int getCantidadPorAparicion() {
-
-        if (tiempoTranscurrido < 60f) {
-            return 10;
-        }
-
-        if (tiempoTranscurrido < 120f) {
-            return 10;
-        }
-
-        return 10;
+    public boolean termino() {
+        return tiempoTranscurrido >= DURACION_PARTIDA;
     }
 
-    public float getTiempoTranscurrido() {
-        return tiempoTranscurrido;
+    public record Etapa(float intervalo, int cantidad, int maximo, int vidaExtraBasico, int vidaExtraJefe,
+                        int maximoJefes) {
     }
 }

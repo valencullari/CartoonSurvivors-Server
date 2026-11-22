@@ -35,7 +35,7 @@ public class Partida {
 
     public synchronized void moverJugador(int id, float direccionX, float direccionY) {
 
-        if (progreso.estaEnPausa()) {
+        if (dificultad.termino() || progreso.estaEnPausa()) {
             return;
         }
 
@@ -48,6 +48,9 @@ public class Partida {
 
 
     public synchronized void actualizar(float delta) {
+        if (dificultad.termino()) {
+            return;
+        }
         jugador1.actualizarReaparicion(delta);
         jugador2.actualizarReaparicion(delta);
         if (progreso.estaEnPausa()) {
@@ -55,9 +58,15 @@ public class Partida {
             return;
         }
 
+        dificultad.actualizar(delta);
+        if (dificultad.termino()) {
+            jugador1.establecerMovimiento(0f, 0f);
+            jugador2.establecerMovimiento(0f, 0f);
+            return;
+        }
+
         jugador1.actualizar(delta);
         jugador2.actualizar(delta);
-        dificultad.actualizar(delta);
         generadorEnemigos.actualizar(delta, jugador1, jugador2);
         int bajasAnteriores = gestorEnemigos.getEnemigosEliminados();
         gestorEnemigos.actualizar(delta, jugador1, jugador2);
@@ -92,8 +101,9 @@ public class Partida {
     }
 
     public synchronized String crearMensajeHud(long secuencia) {
-        return Protocolo.HUD + "|" + secuencia + "|" + (int) dificultad.getTiempoTranscurrido()
-            + "|" + gestorEnemigos.getEnemigosEliminados() + "|" + progreso.datosHud();
+        return Protocolo.HUD + "|" + secuencia + "|" + dificultad.getTiempoTranscurrido()
+            + "|" + gestorEnemigos.getEnemigosEliminados() + "|" + progreso.datosHud()
+            + (dificultad.termino() ? "|VICTORIA" : "");
     }
 
     public synchronized void elegirMejora(int id, String partidaId, int nivel, int revision, int opcion) {
@@ -134,15 +144,20 @@ public class Partida {
 
     public synchronized List<String> crearMensajesEnemigos(long secuencia) {
 
+        List<String> entradas = new ArrayList<>();
+        for (Enemigo enemigo : gestorEnemigos.getEnemigos()) {
+            entradas.add(enemigo.getId() + ":" + enemigo.getTipo().name() + ":" + enemigo.getPosicionX()
+                + ":" + enemigo.getPosicionY() + ":" + enemigo.getVida());
+        }
+        gestorEnemigos.getAtaqueFuego().agregarEstado(entradas);
+
         List<String> bloquesDatos = new ArrayList<>();
 
         StringBuilder bloqueActual = new StringBuilder();
 
-        for (Enemigo enemigo : gestorEnemigos.getEnemigos()) {
+        for (String datos : entradas) {
 
-            String datosEnemigo = enemigo.getId() + ":" + enemigo.getTipo().name() + ":" + enemigo.getPosicionX() + ":" + enemigo.getPosicionY() + ":" + enemigo.getVida();
-
-            String entrada = "|" + datosEnemigo;
+            String entrada = "|" + datos;
 
             int bytesActuales = bloqueActual.toString().getBytes(StandardCharsets.UTF_8).length;
 

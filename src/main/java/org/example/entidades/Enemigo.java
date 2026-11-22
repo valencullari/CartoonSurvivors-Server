@@ -2,8 +2,6 @@ package org.example.entidades;
 
 public class Enemigo {
 
-    private static final float ANCHO_HITBOX = 24f;
-    private static final float ALTO_HITBOX = 40f;
     private static final float COOLDOWN_ATAQUE = 1.0f;
 
     private static final float FUERZA_RETROCESO = 18f;
@@ -20,7 +18,7 @@ public class Enemigo {
     private float velocidadRetrocesoX = 0f;
     private float velocidadRetrocesoY = 0f;
 
-    public Enemigo(int id, TipoEnemigo tipo, float posicionX, float posicionY) {
+    public Enemigo(int id, TipoEnemigo tipo, float posicionX, float posicionY, int vidaExtra) {
 
         this.id = id;
         this.tipo = tipo;
@@ -28,34 +26,20 @@ public class Enemigo {
         this.posicionX = posicionX;
         this.posicionY = posicionY;
 
-        this.vida = tipo.getVidaMaxima();
+        this.vida = tipo.getVidaMaxima() + vidaExtra;
     }
 
 
     public void actualizar(float delta, Jugador jugador1, Jugador jugador2) {
 
-        if (!jugador1.estaVivo() && !jugador2.estaVivo()) {
+        Jugador objetivo = elegirObjetivo(jugador1, jugador2);
+        if (objetivo == null) {
             return;
         }
 
-        Jugador objetivo;
-
-        float distancia1 = calcularDistancia(jugador1);
-        float distancia2 = calcularDistancia(jugador2);
-
-        if (!jugador1.estaVivo()) {
-            objetivo = jugador2;
-        } else if (!jugador2.estaVivo()) {
-            objetivo = jugador1;
-        } else if (distancia1 <= distancia2) {
-            objetivo = jugador1;
-        } else {
-            objetivo = jugador2;
-        }
-
         // Centros de las hitboxes
-        float centroEnemigoX = posicionX + ANCHO_HITBOX / 2f;
-        float centroEnemigoY = posicionY + ALTO_HITBOX / 2f;
+        float centroEnemigoX = posicionX + getAnchoHitbox() / 2f;
+        float centroEnemigoY = posicionY + getAltoHitbox() / 2f;
 
         float centroJugadorX = objetivo.getPosicionX() + objetivo.getAnchoHitbox() / 2f;
 
@@ -80,6 +64,17 @@ public class Enemigo {
         posicionY += direccionY * movimiento;
     }
 
+
+    public Jugador elegirObjetivo(Jugador jugador1, Jugador jugador2) {
+
+        if (!jugador1.estaVivo()) {
+            return jugador2.estaVivo() ? jugador2 : null;
+        }
+        if (!jugador2.estaVivo()) {
+            return jugador1;
+        }
+        return calcularDistancia(jugador1) <= calcularDistancia(jugador2) ? jugador1 : jugador2;
+    }
 
     private float calcularDistancia(Jugador jugador) {
 
@@ -112,9 +107,9 @@ public class Enemigo {
         posicionY += desplazamientoY;
 
         // Mantener la hitbox dentro del mapa.
-        posicionX = Math.max(0f, Math.min(12800f - ANCHO_HITBOX, posicionX));
+        posicionX = Math.max(0f, Math.min(12800f - getAnchoHitbox(), posicionX));
 
-        posicionY = Math.max(0f, Math.min(12800f - ALTO_HITBOX, posicionY));
+        posicionY = Math.max(0f, Math.min(12800f - getAltoHitbox(), posicionY));
     }
 
 
@@ -128,9 +123,9 @@ public class Enemigo {
 
     public void retrocederDesde(Jugador jugador) {
 
-        float centroEnemigoX = posicionX + ANCHO_HITBOX / 2f;
+        float centroEnemigoX = posicionX + getAnchoHitbox() / 2f;
 
-        float centroEnemigoY = posicionY + ALTO_HITBOX / 2f;
+        float centroEnemigoY = posicionY + getAltoHitbox() / 2f;
 
         float centroJugadorX = jugador.getPosicionX() + jugador.getAnchoHitbox() / 2f;
 
@@ -215,10 +210,10 @@ public class Enemigo {
     }
 
     public float getAnchoHitbox() {
-        return ANCHO_HITBOX;
+        return tipo.getAnchoHitbox();
     }
 
     public float getAltoHitbox() {
-        return ALTO_HITBOX;
+        return tipo.getAltoHitbox();
     }
 }
