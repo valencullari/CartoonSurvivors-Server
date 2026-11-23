@@ -10,6 +10,7 @@ public class GeneradorEnemigos {
 
     private static final int PRIMER_JEFE = 20;
     private static final int INTERVALO_JEFE = 45;
+    private static final float PROBABILIDAD_VIOLETA = 0.15f;
     private static final float DISTANCIA_MINIMA = 350f;
     private static final float DISTANCIA_MAXIMA = 550f;
 
@@ -66,7 +67,9 @@ public class GeneradorEnemigos {
                 break;
             }
 
-            generarEnemigo(TipoEnemigo.BASICO, etapa.vidaExtraBasico(), jugador1, jugador2);
+            TipoEnemigo tipo = random.nextFloat() < PROBABILIDAD_VIOLETA
+                    ? TipoEnemigo.VIOLETA : TipoEnemigo.BASICO;
+            generarEnemigo(tipo, etapa.vidaExtraBasico(), jugador1, jugador2);
         }
     }
 

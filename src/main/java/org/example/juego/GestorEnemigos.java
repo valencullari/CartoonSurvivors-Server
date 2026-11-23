@@ -87,6 +87,10 @@ public class GestorEnemigos {
 
     private void separarEnemigos(Enemigo e1, Enemigo e2) {
 
+        if (e1.getTipo() == TipoEnemigo.MUERTE || e2.getTipo() == TipoEnemigo.MUERTE) {
+            return;
+        }
+
         // Calcular los centros de las hitboxes.
         float centro1X = e1.getPosicionX() + e1.getAnchoHitbox() / 2f;
 

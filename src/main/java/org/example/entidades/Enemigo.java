@@ -5,11 +5,13 @@ public class Enemigo {
     private static final float COOLDOWN_ATAQUE = 1.0f;
 
     private static final float FUERZA_RETROCESO = 18f;
+    private static final float FUERZA_RETROCESO_VIOLETA = 36f;
     private static final float DURACION_RETROCESO = 0.15f;
 
 
     private final int id;
     private final TipoEnemigo tipo;
+    private final int vidaMaxima;
     private float posicionX;
     private float posicionY;
     private int vida;
@@ -26,11 +28,16 @@ public class Enemigo {
         this.posicionX = posicionX;
         this.posicionY = posicionY;
 
-        this.vida = tipo.getVidaMaxima() + vidaExtra;
+        this.vidaMaxima = tipo.getVidaMaxima() + vidaExtra;
+        this.vida = vidaMaxima;
     }
 
 
     public void actualizar(float delta, Jugador jugador1, Jugador jugador2) {
+
+        if (tipo == TipoEnemigo.VIOLETA && tiempoRetroceso > 0f) {
+            return;
+        }
 
         Jugador objetivo = elegirObjetivo(jugador1, jugador2);
         if (objetivo == null) {
@@ -144,10 +151,16 @@ public class Enemigo {
             direccionY /= distancia;
         }
 
-        velocidadRetrocesoX = direccionX * FUERZA_RETROCESO / DURACION_RETROCESO;
+        iniciarRetroceso(direccionX, direccionY, FUERZA_RETROCESO);
+    }
 
-        velocidadRetrocesoY = direccionY * FUERZA_RETROCESO / DURACION_RETROCESO;
+    public void rebotarDesdeContacto(float direccionX, float direccionY) {
+        iniciarRetroceso(direccionX, direccionY, FUERZA_RETROCESO_VIOLETA);
+    }
 
+    private void iniciarRetroceso(float direccionX, float direccionY, float distancia) {
+        velocidadRetrocesoX = direccionX * distancia / DURACION_RETROCESO;
+        velocidadRetrocesoY = direccionY * distancia / DURACION_RETROCESO;
         tiempoRetroceso = DURACION_RETROCESO;
     }
 
@@ -203,6 +216,10 @@ public class Enemigo {
 
     public int getVida() {
         return vida;
+    }
+
+    public int getVidaMaxima() {
+        return vidaMaxima;
     }
 
     public int getDanio() {

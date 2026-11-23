@@ -13,6 +13,7 @@ public class Jugador {
     private static final int SEGUNDOS_REAPARICION = 30;
     private static final float ANCHO_HITBOX = 40f;
     private static final float ALTO_HITBOX = 60f;
+    private static final float REGENERACION_BASE = 0.5f;
 
     private final int id;
     private final String personaje;
@@ -26,7 +27,7 @@ public class Jugador {
     private float vida;
     private float vidaMaxima = 100f;
     private double tiempoReaparicion;
-    private float regeneracion;
+    private float regeneracion = REGENERACION_BASE;
     private float velocidad = 200f;
     private final List<Arma> armas = new ArrayList<>();
 

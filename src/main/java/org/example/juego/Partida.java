@@ -2,6 +2,7 @@ package org.example.juego;
 
 import org.example.entidades.Jugador;
 import org.example.entidades.Enemigo;
+import org.example.entidades.TipoEnemigo;
 import org.example.entidades.armas.Arma;
 import org.example.entidades.armas.Pistola;
 import org.example.red.protocolo.Protocolo;
@@ -176,8 +177,12 @@ public class Partida {
 
         List<String> entradas = new ArrayList<>();
         for (Enemigo enemigo : gestorEnemigos.getEnemigos()) {
-            entradas.add(enemigo.getId() + ":" + enemigo.getTipo().name() + ":" + enemigo.getPosicionX()
-                + ":" + enemigo.getPosicionY() + ":" + enemigo.getVida());
+            String entrada = enemigo.getId() + ":" + enemigo.getTipo().name() + ":" + enemigo.getPosicionX()
+                + ":" + enemigo.getPosicionY() + ":" + enemigo.getVida();
+            if (enemigo.getTipo() == TipoEnemigo.JEFE) {
+                entrada += ":" + enemigo.getVidaMaxima();
+            }
+            entradas.add(entrada);
         }
         gestorEnemigos.getAtaqueFuego().agregarEstado(entradas);
 
