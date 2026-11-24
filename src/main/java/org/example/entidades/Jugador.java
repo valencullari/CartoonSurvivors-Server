@@ -5,10 +5,13 @@ import org.example.entidades.armas.Espada;
 import org.example.entidades.armas.Pistola;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import org.example.juego.GestorEnemigos;
 
 public class Jugador {
 
+    public static final int AUMENTO_CRITICO = 5;
+    private static final int ARMADURA_MAXIMA = 80;
     private static final long TIEMPO_SIN_MOVIMIENTO = 200;
     private static final int SEGUNDOS_REAPARICION = 30;
     private static final float ANCHO_HITBOX = 40f;
@@ -23,12 +26,16 @@ public class Jugador {
 
     private float direccionX;
     private float direccionY;
+    private int ladoMirada = -1;
 
     private float vida;
     private float vidaMaxima = 100f;
     private double tiempoReaparicion;
     private float regeneracion = REGENERACION_BASE;
     private float velocidad = 200f;
+    private int nivelVidaMaxima;
+    private int armadura;
+    private int probabilidadCritico;
     private final List<Arma> armas = new ArrayList<>();
 
     private long ultimoMovimiento;
@@ -72,6 +79,9 @@ public class Jugador {
 
         direccionX = x;
         direccionY = y;
+        if (x != 0f) {
+            ladoMirada = x > 0f ? 1 : -1;
+        }
 
         ultimoMovimiento = System.currentTimeMillis();
     }
@@ -103,7 +113,7 @@ public class Jugador {
             return;
         }
 
-        vida = Math.max(0f, vida - cantidad);
+        vida = Math.max(0f, vida - cantidad * ((100 - armadura) / 100f));
         if (!estaVivo()) {
             direccionX = 0f;
             direccionY = 0f;
@@ -152,8 +162,8 @@ public class Jugador {
     }
 
 
-    public void aumentarVelocidad() {
-        velocidad += 20f;
+    public void aumentarVelocidad(int porcentaje) {
+        velocidad *= 1f + porcentaje / 100f;
     }
 
     public boolean puedeDesbloquearArma() {
@@ -166,13 +176,38 @@ public class Jugador {
         }
     }
 
-    public void aumentarVidaMaxima() {
-        vidaMaxima += 20f;
+    public void aumentarVidaMaxima(int cantidad) {
+        vidaMaxima += cantidad;
+        nivelVidaMaxima++;
         curar(30f);
     }
 
-    public void aumentarRegeneracion() {
-        regeneracion += 1f;
+    public int getNivelVidaMaxima() {
+        return nivelVidaMaxima;
+    }
+
+    public void aumentarRegeneracion(int cantidad) {
+        regeneracion += cantidad;
+    }
+
+    public int getMargenArmadura() {
+        return ARMADURA_MAXIMA - armadura;
+    }
+
+    public void aumentarArmadura(int porcentaje) {
+        armadura = Math.min(ARMADURA_MAXIMA, armadura + porcentaje);
+    }
+
+    public boolean puedeAumentarCritico() {
+        return probabilidadCritico < 100;
+    }
+
+    public void aumentarCritico(int porcentaje) {
+        probabilidadCritico = Math.min(100, probabilidadCritico + porcentaje);
+    }
+
+    public float calcularDanio(float danio) {
+        return ThreadLocalRandom.current().nextInt(100) < probabilidadCritico ? danio * 2f : danio;
     }
 
     private void curar(float cantidad) {
@@ -215,6 +250,26 @@ public class Jugador {
 
     public float getDireccionY() {
         return direccionY;
+    }
+
+    public int getLadoMirada() {
+        return ladoMirada;
+    }
+
+    public float getVelocidad() {
+        return velocidad;
+    }
+
+    public float getRegeneracion() {
+        return regeneracion;
+    }
+
+    public int getArmadura() {
+        return armadura;
+    }
+
+    public int getProbabilidadCritico() {
+        return probabilidadCritico;
     }
 
     public List<Arma> getArmas() {

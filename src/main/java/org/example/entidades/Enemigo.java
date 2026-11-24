@@ -14,7 +14,7 @@ public class Enemigo {
     private final int vidaMaxima;
     private float posicionX;
     private float posicionY;
-    private int vida;
+    private float vida;
     private float tiempoRestanteAtaque = 0f;
     private float tiempoRetroceso = 0f;
     private float velocidadRetrocesoX = 0f;
@@ -92,7 +92,7 @@ public class Enemigo {
         return (float) Math.sqrt(diferenciaX * diferenciaX + diferenciaY * diferenciaY);
     }
 
-    public void recibirDanio(int cantidad) {
+    public void recibirDanio(float cantidad) {
 
         if (cantidad <= 0) {
             return;
@@ -214,7 +214,7 @@ public class Enemigo {
         return posicionY;
     }
 
-    public int getVida() {
+    public float getVida() {
         return vida;
     }
 

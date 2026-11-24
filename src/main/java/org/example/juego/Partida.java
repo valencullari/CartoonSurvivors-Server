@@ -4,7 +4,6 @@ import org.example.entidades.Jugador;
 import org.example.entidades.Enemigo;
 import org.example.entidades.TipoEnemigo;
 import org.example.entidades.armas.Arma;
-import org.example.entidades.armas.Pistola;
 import org.example.red.protocolo.Protocolo;
 
 import java.util.ArrayList;
@@ -138,7 +137,9 @@ public class Partida {
         return jugador.getId() + ":" + jugador.getPosicionX() + ":" + jugador.getPosicionY()
             + ":" + jugador.getDireccionX() + ":" + jugador.getDireccionY() + ":" + jugador.getVida()
             + ":" + datosArmas(jugador) + ":" + jugador.getVidaMaxima()
-            + ":" + jugador.getSegundosParaReaparecer();
+            + ":" + jugador.getSegundosParaReaparecer() + ":" + jugador.getVelocidad()
+            + ":" + jugador.getRegeneracion() + ":" + jugador.getArmadura() + ":" + jugador.getProbabilidadCritico()
+            + ":" + jugador.getLadoMirada();
     }
 
     private String datosArmas(Jugador jugador) {
@@ -152,9 +153,6 @@ public class Partida {
             }
             datos.append(i).append(",").append(arma.getTipo()).append(",").append(arma.getNumeroAtaque()).append(",").append(arma.getDireccionAtaque())
                 .append(",").append(arma.getAlcanceAtaque());
-            if (arma instanceof Pistola pistola) {
-                datos.append(",").append(pistola.getOrigenX()).append(",").append(pistola.getOrigenY());
-            }
         }
 
         return datos.toString();
@@ -166,13 +164,14 @@ public class Partida {
         List<String> entradas = new ArrayList<>();
         for (Enemigo enemigo : gestorEnemigos.getEnemigos()) {
             String entrada = enemigo.getId() + ":" + enemigo.getTipo().name() + ":" + enemigo.getPosicionX()
-                + ":" + enemigo.getPosicionY() + ":" + enemigo.getVida();
+                + ":" + enemigo.getPosicionY() + ":" + (int) Math.ceil(enemigo.getVida());
             if (enemigo.getTipo() == TipoEnemigo.JEFE) {
                 entrada += ":" + enemigo.getVidaMaxima();
             }
             entradas.add(entrada);
         }
         gestorEnemigos.getAtaqueFuego().agregarEstado(entradas);
+        gestorEnemigos.agregarEstadoBalas(entradas);
 
         List<String> bloquesDatos = new ArrayList<>();
 

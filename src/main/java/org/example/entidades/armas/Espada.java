@@ -25,7 +25,7 @@ public class Espada extends Arma {
     }
 
     @Override
-    protected void atacar(Jugador jugador, GestorEnemigos gestorEnemigos) {
+    protected boolean atacar(Jugador jugador, GestorEnemigos gestorEnemigos) {
 
         float centroX = jugador.getPosicionX() + CENTRO_ESTELA_X;
 
@@ -41,9 +41,10 @@ public class Espada extends Arma {
 
             if (colisionaConEstela(enemigo, centroX, centroY, anguloBase)) {
 
-                enemigo.recibirDanio(danio);
+                enemigo.recibirDanio(jugador.calcularDanio(getDanio()));
             }
         }
+        return true;
     }
 
     private boolean colisionaConEstela(Enemigo enemigo, float centroX, float centroY, float anguloBase) {

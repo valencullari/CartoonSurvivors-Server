@@ -15,6 +15,7 @@ public class GestorEnemigos {
 
     private final List<Enemigo> enemigos;
     private final AtaqueFuego ataqueFuego = new AtaqueFuego();
+    private final List<Bala> balas = new ArrayList<>();
     private int enemigosEliminados;
 
     public int getEnemigosEliminados() {
@@ -39,6 +40,7 @@ public class GestorEnemigos {
     public void actualizar(float delta, Jugador jugador1, Jugador jugador2) {
 
         ataqueFuego.actualizar(delta, jugador1, jugador2);
+        balas.removeIf(bala -> !bala.actualizar(delta));
 
         // 1. Eliminar muertos y actualizar movimiento.
         for (int i = enemigos.size() - 1; i >= 0; i--) {
@@ -63,6 +65,16 @@ public class GestorEnemigos {
 
         // 2. Resolver superposiciones entre enemigos.
         resolverColisionesEntreEnemigos();
+    }
+
+    public void dispararBala(float x, float y, Enemigo objetivo, float danio) {
+        balas.add(new Bala(x, y, objetivo, danio));
+    }
+
+    void agregarEstadoBalas(List<String> entradas) {
+        for (Bala bala : balas) {
+            entradas.add(bala.datos());
+        }
     }
 
     private void resolverColisionesEntreEnemigos() {

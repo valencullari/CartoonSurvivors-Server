@@ -7,31 +7,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.IntConsumer;
 
 final class ProgresoPartida {
     private static final float DURACION_MEJORAS = 10f;
+    private static final int AUMENTO_MINIMO_PORCENTUAL = 5;
+    private static final int AUMENTO_MAXIMO_PORCENTUAL = 15;
 
-    private enum Mejora {
-        DANIO, ALCANCE, CADENCIA, VELOCIDAD, ARMA, VIDA_MAXIMA, REGENERACION;
-
-    }
-
-    private record Opcion(Mejora mejora, Arma arma) {
-        void aplicar(Jugador jugador) {
-            switch (mejora) {
-                case DANIO -> arma.aumentarDanio();
-                case ALCANCE -> arma.aumentarAlcance();
-                case CADENCIA -> arma.aumentarCadencia();
-                case VELOCIDAD -> jugador.aumentarVelocidad();
-                case ARMA -> jugador.desbloquearArma();
-                case VIDA_MAXIMA -> jugador.aumentarVidaMaxima();
-                case REGENERACION -> jugador.aumentarRegeneracion();
-            }
-        }
-
-        String codigo() {
-            return arma == null ? mejora.name() : mejora.name() + "_" + arma.getTipo();
-        }
+    private record Opcion(String codigo, Runnable aplicar) {
     }
 
     private final String partidaId = UUID.randomUUID().toString();
@@ -68,7 +52,7 @@ final class ProgresoPartida {
     private void finalizarRonda() {
         tiempoRestante = 0f;
         for (int i = 0; i < jugadores.size(); i++) {
-            opciones.get(i).get(Math.max(0, elecciones[i])).aplicar(jugadores.get(i));
+            opciones.get(i).get(Math.max(0, elecciones[i])).aplicar().run();
         }
         iniciarRondaSiCorresponde();
     }
@@ -105,18 +89,48 @@ final class ProgresoPartida {
     private List<Opcion> sortearOpciones(Jugador jugador) {
         List<Opcion> candidatas = new ArrayList<>();
         for (Arma arma : jugador.getArmas()) {
-            candidatas.add(new Opcion(Mejora.DANIO, arma));
-            candidatas.add(new Opcion(Mejora.ALCANCE, arma));
-            candidatas.add(new Opcion(Mejora.CADENCIA, arma));
+            candidatas.add(sortearMejoraArma(arma));
         }
-        candidatas.add(new Opcion(Mejora.VELOCIDAD, null));
-        candidatas.add(new Opcion(Mejora.VIDA_MAXIMA, null));
-        candidatas.add(new Opcion(Mejora.REGENERACION, null));
+        var azar = ThreadLocalRandom.current();
+        candidatas.add(opcionPersonal("VELOCIDAD", sortearPorcentaje(azar), jugador::aumentarVelocidad));
+        int vida = azar.nextInt(10, 31);
+        candidatas.add(new Opcion("VIDA_MAXIMA:" + vida + ":" + (jugador.getNivelVidaMaxima() + 1),
+                () -> jugador.aumentarVidaMaxima(vida)));
+        candidatas.add(opcionPersonal("REGENERACION", 1, jugador::aumentarRegeneracion));
+        int armadura = Math.min(sortearPorcentaje(azar), jugador.getMargenArmadura());
+        if (armadura > 0) {
+            candidatas.add(opcionPersonal("ARMADURA", armadura, jugador::aumentarArmadura));
+        }
+        if (jugador.puedeAumentarCritico()) {
+            candidatas.add(opcionPersonal("CRITICO", Jugador.AUMENTO_CRITICO, jugador::aumentarCritico));
+        }
         if (jugador.puedeDesbloquearArma()) {
-            candidatas.add(new Opcion(Mejora.ARMA, null));
+            candidatas.add(new Opcion("ARMA", jugador::desbloquearArma));
         }
         Collections.shuffle(candidatas);
         return candidatas.subList(0, 3);
+    }
+
+    private Opcion sortearMejoraArma(Arma arma) {
+        var azar = ThreadLocalRandom.current();
+        int principal = azar.nextInt(3);
+        int danio = sortearAtributo(principal == 0, azar);
+        int alcance = sortearAtributo(principal == 1, azar);
+        int intervalo = sortearAtributo(principal == 2, azar);
+        String codigo = arma.getTipo() + ":" + danio + ":" + alcance + ":" + intervalo;
+        return new Opcion(codigo, () -> arma.mejorar(danio, alcance, intervalo));
+    }
+
+    private int sortearAtributo(boolean principal, ThreadLocalRandom azar) {
+        return principal || azar.nextInt(100) < 30 ? sortearPorcentaje(azar) : 0;
+    }
+
+    private int sortearPorcentaje(ThreadLocalRandom azar) {
+        return azar.nextInt(AUMENTO_MINIMO_PORCENTUAL, AUMENTO_MAXIMO_PORCENTUAL + 1);
+    }
+
+    private Opcion opcionPersonal(String tipo, int valor, IntConsumer aplicar) {
+        return new Opcion(tipo + ":" + valor, () -> aplicar.accept(valor));
     }
 
     private int experienciaNecesaria() {

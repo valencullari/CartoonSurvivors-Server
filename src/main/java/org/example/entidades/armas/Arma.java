@@ -5,7 +5,7 @@ import org.example.juego.GestorEnemigos;
 
 public abstract class Arma {
 
-    protected int danio;
+    private float danio;
     private float cooldown;
 
     private float tiempoRestante;
@@ -41,15 +41,18 @@ public abstract class Arma {
             return;
         }
 
-        tiempoRestante = cooldown;
-        numeroAtaque++;
         alcanceAtaque = alcance;
         direccionAtaque = direccion;
 
-        atacar(jugador, gestorEnemigos);
+        if (atacar(jugador, gestorEnemigos)) {
+            tiempoRestante = cooldown;
+            numeroAtaque++;
+        } else {
+            tiempoRestante = 0f;
+        }
     }
 
-    protected abstract void atacar(Jugador jugador, GestorEnemigos gestorEnemigos);
+    protected abstract boolean atacar(Jugador jugador, GestorEnemigos gestorEnemigos);
 
     public abstract String getTipo();
 
@@ -61,23 +64,19 @@ public abstract class Arma {
         return numeroAtaque;
     }
 
-    public void aumentarDanio() {
-        danio += 5;
-    }
-
-    public void aumentarCadencia() {
-        cooldown *= 0.9f;
-    }
-
-    public void aumentarAlcance() {
-        alcance += 0.15f;
+    public void mejorar(int porcentajeDanio, int porcentajeAlcance, int porcentajeIntervalo) {
+        danio *= 1f + porcentajeDanio / 100f;
+        alcance *= 1f + porcentajeAlcance / 100f;
+        float factorIntervalo = 1f - porcentajeIntervalo / 100f;
+        cooldown *= factorIntervalo;
+        tiempoRestante *= factorIntervalo;
     }
 
     public float getAlcanceAtaque() {
         return alcanceAtaque;
     }
 
-    public int getDanio() {
+    public float getDanio() {
         return danio;
     }
 }
