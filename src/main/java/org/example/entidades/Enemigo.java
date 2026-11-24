@@ -5,7 +5,7 @@ public class Enemigo {
     private static final float COOLDOWN_ATAQUE = 1.0f;
 
     private static final float FUERZA_RETROCESO = 18f;
-    private static final float FUERZA_RETROCESO_VIOLETA = 36f;
+    private static final float FUERZA_RETROCESO_VIOLETA = 30f;
     private static final float DURACION_RETROCESO = 0.15f;
     private static final float ACELERACION_MUERTE = 100f;
 

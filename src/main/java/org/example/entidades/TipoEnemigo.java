@@ -3,10 +3,10 @@ package org.example.entidades;
 
 public enum TipoEnemigo {
 
-    BASICO(25, 80f, 15, 24f, 40f),
-    VIOLETA(15, 150f, 15, 30f, 44f),
-    JEFE(380, 80f, 40, 84f, 94f),
-    MUERTE(1000, 500f, 50, 100f, 120f);
+    BASICO(25, 80f, 20, 24f, 40f),
+    VIOLETA(15, 150f, 20, 30f, 44f),
+    JEFE(450, 80f, 40, 84f, 94f),
+    MUERTE(1000000, 500f, 500000, 100f, 120f);
 
     private final int vidaMaxima;
     private final float velocidad;

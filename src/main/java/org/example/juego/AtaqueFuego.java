@@ -11,13 +11,13 @@ import java.util.Map;
 final class AtaqueFuego {
 
     private static final float ALCANCE = 1200f;
-    private static final float VELOCIDAD = 300f;
+    private static final float VELOCIDAD = 340f;
     private static final float SEPARACION = 50f;
     private static final float COOLDOWN = 5f;
     private static final float RADIO = 50f;
     private static final float DURACION = 7f;
     private static final float DURACION_DESVANECIMIENTO = 1f;
-    private static final float DANIO_POR_SEGUNDO = 20f;
+    private static final float DANIO_POR_SEGUNDO = 35f;
 
     private final List<Circulo> circulos = new ArrayList<>();
     private final List<Trayectoria> trayectorias = new ArrayList<>();

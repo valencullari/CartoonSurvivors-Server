@@ -14,7 +14,7 @@ import java.util.function.IntConsumer;
 final class ProgresoPartida {
     private static final float DURACION_MEJORAS = 10f;
     private static final int AUMENTO_MINIMO_PORCENTUAL = 5;
-    private static final int AUMENTO_MAXIMO_PORCENTUAL = 15;
+    private static final int AUMENTO_MAXIMO_PORCENTUAL = 12;
     private static final int PROBABILIDAD_BALA_EXTRA = 3;
 
     private record Opcion(String codigo, Runnable aplicar) {
@@ -157,8 +157,7 @@ final class ProgresoPartida {
 
     private int experienciaNecesaria() {
         int nivelesAvanzados = Math.max(0, nivel - 5);
-        return 5 + Math.min(nivel - 1, 3) * 3 + Math.max(0, nivel - 4) * 2
-            + nivelesAvanzados * (nivelesAvanzados + 1) / 12;
+        return 5 + Math.min(nivel - 1, 4) * 3 + Math.max(0, nivel - 4) * 2 + nivelesAvanzados * (nivelesAvanzados + 1) / 10;
     }
 
     String datosHud() {

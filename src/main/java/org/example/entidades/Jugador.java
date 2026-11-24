@@ -11,7 +11,7 @@ import org.example.juego.GestorEnemigos;
 public class Jugador {
 
     public static final int AUMENTO_CRITICO = 5;
-    private static final int ARMADURA_MAXIMA = 80;
+    private static final int ARMADURA_MAXIMA = 50;
     private static final long TIEMPO_SIN_MOVIMIENTO = 200;
     private static final int SEGUNDOS_REAPARICION = 30;
     private static final float ANCHO_HITBOX = 40f;
@@ -184,7 +184,7 @@ public class Jugador {
     public void aumentarVidaMaxima(int cantidad) {
         vidaMaxima += cantidad;
         nivelVidaMaxima++;
-        curar(30f);
+        curar(15f);
     }
 
     public int getNivelVidaMaxima() {
