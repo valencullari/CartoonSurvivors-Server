@@ -4,13 +4,18 @@ import org.example.entidades.Enemigo;
 import org.example.entidades.Jugador;
 import org.example.juego.GestorEnemigos;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 public class Pistola extends Arma {
     private static final float ALCANCE = 260f;
     // Coseno de 60 grados respecto del lado al que mira el personaje.
     private static final float LIMITE_CONO_FRONTAL = 0.5f;
+    private int proyectiles = 1;
 
     public Pistola() {
-        super(15, 1f);
+        super(15, 0.85f);
     }
 
     @Override
@@ -18,9 +23,9 @@ public class Pistola extends Arma {
         float origenX = jugador.getPosicionX() + jugador.getAnchoHitbox() / 2f;
         float origenY = jugador.getPosicionY() + jugador.getAltoHitbox() / 2f;
         float alcance = ALCANCE * getAlcanceAtaque();
-        float distanciaMinima = alcance * alcance;
+        float alcanceCuadrado = alcance * alcance;
         int lado = jugador.getLadoMirada();
-        Enemigo objetivo = null;
+        List<Objetivo> objetivos = new ArrayList<>();
 
         for (Enemigo enemigo : gestorEnemigos.getEnemigos()) {
             if (!enemigo.estaVivo()) {
@@ -30,22 +35,34 @@ public class Pistola extends Arma {
             float dy = enemigo.getPosicionY() + enemigo.getAltoHitbox() / 2f - origenY;
             float distancia = dx * dx + dy * dy;
             float frente = dx * lado;
-            if (distancia <= distanciaMinima && frente > 0f
+            if (distancia <= alcanceCuadrado && frente > 0f
                     && frente * frente >= distancia * LIMITE_CONO_FRONTAL * LIMITE_CONO_FRONTAL) {
-                distanciaMinima = distancia;
-                objetivo = enemigo;
+                objetivos.add(new Objetivo(enemigo, distancia));
             }
         }
 
-        if (objetivo == null) {
+        if (objetivos.isEmpty()) {
             return false;
         }
-        gestorEnemigos.dispararBala(origenX, origenY, objetivo, jugador.calcularDanio(getDanio()));
+        objetivos.sort(Comparator.comparingDouble(Objetivo::distanciaCuadrada));
+        int blancos = Math.min(proyectiles, objetivos.size());
+        for (int i = 0; i < proyectiles; i++) {
+            float separacion = (i - (proyectiles - 1) / 2f) * 10f;
+            Enemigo objetivo = objetivos.get(i % blancos).enemigo();
+            gestorEnemigos.dispararBala(origenX, origenY + separacion, objetivo, jugador.calcularDanio(getDanio()));
+        }
         return true;
+    }
+
+    public void agregarProyectil() {
+        proyectiles++;
     }
 
     @Override
     public String getTipo() {
         return "PISTOLA";
+    }
+
+    private record Objetivo(Enemigo enemigo, float distanciaCuadrada) {
     }
 }

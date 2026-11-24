@@ -2,6 +2,7 @@ package org.example.juego;
 
 import org.example.entidades.Jugador;
 import org.example.entidades.armas.Arma;
+import org.example.entidades.armas.Pistola;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,6 +15,7 @@ final class ProgresoPartida {
     private static final float DURACION_MEJORAS = 10f;
     private static final int AUMENTO_MINIMO_PORCENTUAL = 5;
     private static final int AUMENTO_MAXIMO_PORCENTUAL = 15;
+    private static final int PROBABILIDAD_BALA_EXTRA = 3;
 
     private record Opcion(String codigo, Runnable aplicar) {
     }
@@ -122,6 +124,12 @@ final class ProgresoPartida {
         int alcance = sortearAtributo(principal == 1, azar);
         int intervalo = sortearAtributo(principal == 2, azar);
         String codigo = arma.getTipo() + ":" + danio + ":" + alcance + ":" + intervalo;
+        if (arma instanceof Pistola pistola && azar.nextInt(100) < PROBABILIDAD_BALA_EXTRA) {
+            return new Opcion(codigo + ":1", () -> {
+                pistola.mejorar(danio, alcance, intervalo);
+                pistola.agregarProyectil();
+            });
+        }
         return new Opcion(codigo, () -> arma.mejorar(danio, alcance, intervalo));
     }
 
