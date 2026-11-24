@@ -10,7 +10,7 @@ public class GeneradorEnemigos {
 
     private static final int PRIMER_JEFE = 20;
     private static final int INTERVALO_JEFE = 45;
-    private static final float PROBABILIDAD_VIOLETA = 0.5f;
+    private static final float PROBABILIDAD_VIOLETA = 0.05f;
     private static final float DISTANCIA_MINIMA = 350f;
     private static final float DISTANCIA_MAXIMA = 550f;
 

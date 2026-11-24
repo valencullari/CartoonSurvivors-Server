@@ -2,7 +2,7 @@ package org.example.juego;
 
 public class DificultadPartida {
 
-    private static final int INICIO_FASE_FINAL = 30;
+    private static final int INICIO_FASE_FINAL = 600;
     private static final int DURACION_ETAPA = 60;
 
     private static final Etapa[] ETAPAS = {
@@ -21,7 +21,7 @@ public class DificultadPartida {
     private double tiempoTranscurrido;
 
     public void actualizar(float delta) {
-        tiempoTranscurrido = Math.min(INICIO_FASE_FINAL, tiempoTranscurrido + delta);
+        tiempoTranscurrido += delta;
     }
 
     public Etapa getEtapa() {
