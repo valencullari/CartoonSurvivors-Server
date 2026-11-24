@@ -42,7 +42,7 @@ final class AtaqueFuego {
         circulos.add(new Circulo(origenX, origenY, DURACION));
     }
 
-    void actualizar(float delta, Jugador jugador1, Jugador jugador2) {
+    void actualizar(float delta, Jugador jugador1, Jugador jugador2, float multiplicadorDanio) {
         recargas.replaceAll((id, restante) -> restante - delta);
         recargas.values().removeIf(restante -> restante <= 0f);
 
@@ -51,15 +51,15 @@ final class AtaqueFuego {
             return trayectoria.termino();
         });
 
-        aplicarDanio(jugador1, delta);
-        aplicarDanio(jugador2, delta);
+        aplicarDanio(jugador1, delta, multiplicadorDanio);
+        aplicarDanio(jugador2, delta, multiplicadorDanio);
         circulos.removeIf(circulo -> {
             circulo.tiempoRestante -= delta;
             return circulo.tiempoRestante <= 0f;
         });
     }
 
-    private void aplicarDanio(Jugador jugador, float delta) {
+    private void aplicarDanio(Jugador jugador, float delta, float multiplicadorDanio) {
         if (!jugador.estaVivo()) {
             return;
         }
@@ -77,7 +77,7 @@ final class AtaqueFuego {
                 exposicion = Math.max(exposicion, fin - inicio);
             }
         }
-        jugador.recibirDanio(DANIO_POR_SEGUNDO * exposicion);
+        jugador.recibirDanio(DANIO_POR_SEGUNDO * exposicion * multiplicadorDanio);
     }
 
     void agregarEstado(List<String> entradas) {

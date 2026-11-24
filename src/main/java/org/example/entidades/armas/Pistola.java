@@ -16,7 +16,7 @@ public class Pistola extends Arma {
     private static final int MEJORA_RETENCION_REBOTE = 5;
     private int proyectiles = 1;
     private int rebotes = 1;
-    private int perdidaPorRebote = 25;
+    private int perdidaPorRebote = 30;
 
     public Pistola() {
         super(15, 0.85f);

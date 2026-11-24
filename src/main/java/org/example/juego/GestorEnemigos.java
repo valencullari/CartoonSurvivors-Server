@@ -42,9 +42,9 @@ public class GestorEnemigos {
         return enemigo;
     }
 
-    public void actualizar(float delta, Jugador jugador1, Jugador jugador2) {
+    public void actualizar(float delta, Jugador jugador1, Jugador jugador2, float multiplicadorDanio) {
 
-        ataqueFuego.actualizar(delta, jugador1, jugador2);
+        ataqueFuego.actualizar(delta, jugador1, jugador2, multiplicadorDanio);
         balas.removeIf(bala -> !bala.actualizar(delta, enemigos));
 
         // 1. Eliminar muertos y actualizar movimiento.

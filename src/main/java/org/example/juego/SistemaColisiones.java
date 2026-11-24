@@ -8,7 +8,8 @@ public class SistemaColisiones {
 
     private static final float MARGEN_CONTACTO = 0.1f;
 
-    public void actualizar(float delta, Jugador jugador1, Jugador jugador2, GestorEnemigos gestorEnemigos) {
+    public void actualizar(float delta, Jugador jugador1, Jugador jugador2, GestorEnemigos gestorEnemigos,
+                           float multiplicadorDanio) {
 
         if (!Float.isFinite(delta) || delta <= 0f) {
             return;
@@ -23,19 +24,25 @@ public class SistemaColisiones {
             // Actualizar cooldown del enemigo.
             enemigo.actualizarCooldownAtaque(delta);
 
-            resolverContacto(enemigo, jugador1);
-            resolverContacto(enemigo, jugador2);
+            resolverContacto(enemigo, jugador1, multiplicadorDanio);
+            resolverContacto(enemigo, jugador2, multiplicadorDanio);
         }
     }
 
-    private void resolverContacto(Enemigo enemigo, Jugador jugador) {
+    private void resolverContacto(Enemigo enemigo, Jugador jugador, float multiplicadorDanio) {
+        if (enemigo.getTipo() == TipoEnemigo.MUERTE) {
+            if (jugador.estaVivo() && colisionan(enemigo, jugador)) {
+                jugador.eliminar();
+            }
+            return;
+        }
         boolean esVioleta = enemigo.getTipo() == TipoEnemigo.VIOLETA;
         if ((!esVioleta && !enemigo.puedeAtacar()) || !jugador.estaVivo() || !colisionan(enemigo, jugador)) {
             return;
         }
 
         if (enemigo.puedeAtacar()) {
-            jugador.recibirDanio(enemigo.getDanio());
+            jugador.recibirDanio(enemigo.getDanio() * multiplicadorDanio);
             enemigo.registrarAtaque();
         }
 

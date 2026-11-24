@@ -115,10 +115,15 @@ public class Jugador {
 
         vida = Math.max(0f, vida - cantidad * ((100 - armadura) / 100f));
         if (!estaVivo()) {
-            direccionX = 0f;
-            direccionY = 0f;
-            tiempoReaparicion = SEGUNDOS_REAPARICION;
+            eliminar();
         }
+    }
+
+    public void eliminar() {
+        vida = 0f;
+        direccionX = 0f;
+        direccionY = 0f;
+        tiempoReaparicion = SEGUNDOS_REAPARICION;
     }
 
     public void actualizarReaparicion(float delta) {

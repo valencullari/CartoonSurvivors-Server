@@ -4,6 +4,7 @@ public class DificultadPartida {
 
     private static final int INICIO_FASE_FINAL = 600;
     private static final int DURACION_ETAPA = 60;
+    private static final float DANIO_EXTRA_POR_ETAPA = 0.12f;
 
     private static final Etapa[] ETAPAS = {
             new Etapa(3.2f, 10, 300, 0, 0, 2),
@@ -25,8 +26,15 @@ public class DificultadPartida {
     }
 
     public Etapa getEtapa() {
-        int indice = (int) tiempoTranscurrido / DURACION_ETAPA;
-        return ETAPAS[Math.min(indice, ETAPAS.length - 1)];
+        return ETAPAS[indiceEtapa()];
+    }
+
+    public float getMultiplicadorDanio() {
+        return 1f + indiceEtapa() * DANIO_EXTRA_POR_ETAPA;
+    }
+
+    private int indiceEtapa() {
+        return Math.min((int) tiempoTranscurrido / DURACION_ETAPA, ETAPAS.length - 1);
     }
 
     public int getTiempoTranscurrido() {

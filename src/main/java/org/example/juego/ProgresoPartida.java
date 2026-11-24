@@ -156,7 +156,9 @@ final class ProgresoPartida {
     }
 
     private int experienciaNecesaria() {
-        return 5 + Math.min(nivel - 1, 3) * 3 + Math.max(0, nivel - 4) * 2;
+        int nivelesAvanzados = Math.max(0, nivel - 5);
+        return 5 + Math.min(nivel - 1, 3) * 3 + Math.max(0, nivel - 4) * 2
+            + nivelesAvanzados * (nivelesAvanzados + 1) / 12;
     }
 
     String datosHud() {

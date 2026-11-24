@@ -7,7 +7,7 @@ import org.example.juego.GestorEnemigos;
 public class Espada extends Arma {
 
     // El alcance exterior y el ángulo coinciden con la estela del cliente.
-    private static final float RADIO_EXTERNO = 184f;
+    private static final float RADIO_EXTERNO = 130f;
     private static final float ANGULO_BARRIDO = 110f;
     private static final int SEGMENTOS = 20;
     // Centro visual de la estela respecto al origen que se envía al cliente.

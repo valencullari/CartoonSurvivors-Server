@@ -74,7 +74,7 @@ public class GeneradorEnemigos {
     }
 
     public void actualizarFaseFinal(Jugador jugador1, Jugador jugador2) {
-        if (muerte == null || !muerte.estaVivo()) {
+        if (muerte == null) {
             muerte = generarEnemigo(TipoEnemigo.MUERTE, 0, jugador1, jugador2);
         }
     }

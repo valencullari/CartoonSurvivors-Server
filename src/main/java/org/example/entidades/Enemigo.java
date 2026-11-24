@@ -7,6 +7,7 @@ public class Enemigo {
     private static final float FUERZA_RETROCESO = 18f;
     private static final float FUERZA_RETROCESO_VIOLETA = 36f;
     private static final float DURACION_RETROCESO = 0.15f;
+    private static final float ACELERACION_MUERTE = 100f;
 
 
     private final int id;
@@ -19,6 +20,7 @@ public class Enemigo {
     private float tiempoRetroceso = 0f;
     private float velocidadRetrocesoX = 0f;
     private float velocidadRetrocesoY = 0f;
+    private float velocidad;
 
     public Enemigo(int id, TipoEnemigo tipo, float posicionX, float posicionY, int vidaExtra) {
 
@@ -30,6 +32,7 @@ public class Enemigo {
 
         this.vidaMaxima = tipo.getVidaMaxima() + vidaExtra;
         this.vida = vidaMaxima;
+        this.velocidad = tipo.getVelocidad();
     }
 
 
@@ -42,6 +45,9 @@ public class Enemigo {
         Jugador objetivo = elegirObjetivo(jugador1, jugador2);
         if (objetivo == null) {
             return;
+        }
+        if (tipo == TipoEnemigo.MUERTE) {
+            velocidad += ACELERACION_MUERTE * delta;
         }
 
         // Centros de las hitboxes
@@ -65,7 +71,7 @@ public class Enemigo {
         direccionX /= distancia;
         direccionY /= distancia;
 
-        float movimiento = Math.min(tipo.getVelocidad() * delta, distancia);
+        float movimiento = Math.min(velocidad * delta, distancia);
 
         posicionX += direccionX * movimiento;
         posicionY += direccionY * movimiento;
@@ -94,7 +100,7 @@ public class Enemigo {
 
     public void recibirDanio(float cantidad) {
 
-        if (cantidad <= 0) {
+        if (tipo == TipoEnemigo.MUERTE || cantidad <= 0) {
             return;
         }
         vida -= cantidad;

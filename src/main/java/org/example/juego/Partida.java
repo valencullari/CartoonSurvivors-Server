@@ -73,10 +73,11 @@ public class Partida {
             generadorEnemigos.actualizar(delta, jugador1, jugador2);
         }
         int experienciaAnterior = gestorEnemigos.getExperienciaPorBajas();
-        gestorEnemigos.actualizar(delta, jugador1, jugador2);
+        float multiplicadorDanio = dificultad.getMultiplicadorDanio();
+        gestorEnemigos.actualizar(delta, jugador1, jugador2, multiplicadorDanio);
         jugador1.actualizarArmas(delta, gestorEnemigos);
         jugador2.actualizarArmas(delta, gestorEnemigos);
-        sistemaColisiones.actualizar(delta, jugador1, jugador2, gestorEnemigos);
+        sistemaColisiones.actualizar(delta, jugador1, jugador2, gestorEnemigos, multiplicadorDanio);
         if (!jugador1.estaVivo() && !jugador2.estaVivo()) {
             resultado = faseFinal ? "VICTORIA" : "DERROTA";
         } else if (!faseFinal) {
