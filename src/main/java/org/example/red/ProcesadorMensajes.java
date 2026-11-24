@@ -31,7 +31,8 @@ public class ProcesadorMensajes {
             int puerto = paquete.getPort();
             if (!mensaje.equals(Protocolo.KEEP_ALIVE)
                     && !mensaje.startsWith(Protocolo.MOVER + "|")
-                    && !mensaje.startsWith(Protocolo.MEJORA + "|")) {
+                    && !mensaje.startsWith(Protocolo.MEJORA + "|")
+                    && !mensaje.startsWith(Protocolo.PAUSA + "|")) {
                 System.out.println("Mensaje recibido: " + mensaje + " desde " + ip);
             }
 
@@ -56,6 +57,10 @@ public class ProcesadorMensajes {
 
             if (mensaje.startsWith(Protocolo.MEJORA + "|")) {
                 movimiento.procesarMejora(mensaje, ip, puerto);
+                return;
+            }
+            if (mensaje.startsWith(Protocolo.PAUSA + "|")) {
+                movimiento.procesarPausa(mensaje, ip, puerto);
                 return;
             }
 

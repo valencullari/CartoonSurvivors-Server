@@ -38,6 +38,7 @@ public final class Protocolo {
     public static final String MOVER = "MOVER";
     public static final String ESTADO = "ESTADO";
     public static final String MEJORA = "MEJORA";
+    public static final String PAUSA = "PAUSA";
     public static final String HUD = "HUD";
     public static final String ENEMIGOS = "ENEMIGOS";
 

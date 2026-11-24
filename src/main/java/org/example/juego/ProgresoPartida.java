@@ -31,6 +31,10 @@ final class ProgresoPartida {
         jugadores = List.of(jugador1, jugador2);
     }
 
+    boolean correspondeAPartida(String id) {
+        return partidaId.equals(id);
+    }
+
     void agregarExperiencia(int bajas) {
         experiencia += bajas;
         iniciarRondaSiCorresponde();
@@ -58,7 +62,7 @@ final class ProgresoPartida {
     }
 
     void elegirMejora(int jugador, String idRecibido, int nivelElegido, int revision, int opcion) {
-        if (!estaEnPausa() || !partidaId.equals(idRecibido) || nivelElegido != nivel
+        if (!estaEnPausa() || !correspondeAPartida(idRecibido) || nivelElegido != nivel
                 || jugador < 1 || jugador > 2 || opcion < 0 || opcion >= opciones.get(jugador - 1).size()) {
             return;
         }

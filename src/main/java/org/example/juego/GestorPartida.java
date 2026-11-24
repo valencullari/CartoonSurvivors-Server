@@ -40,6 +40,12 @@ public class GestorPartida {
         }
     }
 
+    public synchronized void gestionarPausa(int jugador, String partidaId, int revision, boolean reanudar) {
+        if (partida != null) {
+            partida.gestionarPausa(jugador, partidaId, revision, reanudar);
+        }
+    }
+
     public synchronized String obtenerEstado(long secuencia) {
 
         if (partida == null) {

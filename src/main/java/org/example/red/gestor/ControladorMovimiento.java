@@ -33,6 +33,20 @@ public class ControladorMovimiento {
         }
     }
 
+    public void procesarPausa(String mensaje, InetAddress ip, int puerto) {
+        if (!estado.estaEnCurso()) return;
+        ClienteConectado cliente = conexiones.buscarCliente(ip, puerto);
+        if (cliente == null) return;
+        String[] partes = mensaje.split("\\|", -1);
+        if (partes.length != 4 || (!partes[3].equals("ABRIR") && !partes[3].equals("REANUDAR"))) return;
+        try {
+            int revision = Integer.parseInt(partes[2]);
+            partida.gestionarPausa(cliente.getId(), partes[1], revision, partes[3].equals("REANUDAR"));
+        } catch (NumberFormatException e) {
+            System.out.println("Revision de pausa invalida: " + mensaje);
+        }
+    }
+
     public void procesar(String mensaje, InetAddress ip, int puerto) {
         if (estado.getEstado() != EstadoPartida.EN_CURSO) return;
         ClienteConectado cliente = conexiones.buscarCliente(ip, puerto);

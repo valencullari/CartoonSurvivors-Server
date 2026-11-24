@@ -14,6 +14,7 @@ public class Partida {
     private static final int MAX_BYTES_ENEMIGOS_POR_BLOQUE = 750;
 
     private final ProgresoPartida progreso;
+    private final PausaPartida pausa = new PausaPartida();
     private final Jugador jugador1;
     private final Jugador jugador2;
 
@@ -36,7 +37,7 @@ public class Partida {
 
     public synchronized void moverJugador(int id, float direccionX, float direccionY) {
 
-        if (resultado != null || progreso.estaEnPausa()) {
+        if (resultado != null || pausa.estaActiva() || progreso.estaEnPausa()) {
             return;
         }
 
@@ -49,16 +50,16 @@ public class Partida {
 
 
     public synchronized void actualizar(float delta) {
-        if (resultado != null) {
+        if (resultado != null || pausa.estaActiva()) {
+            return;
+        }
+        if (progreso.estaEnPausa()) {
+            progreso.actualizarPausa(delta);
             return;
         }
         if (!dificultad.estaEnFaseFinal()) {
             jugador1.actualizarReaparicion(delta);
             jugador2.actualizarReaparicion(delta);
-        }
-        if (progreso.estaEnPausa()) {
-            progreso.actualizarPausa(delta);
-            return;
         }
 
         dificultad.actualizar(delta);
@@ -114,7 +115,7 @@ public class Partida {
     public synchronized String crearMensajeHud(long secuencia) {
         return Protocolo.HUD + "|" + secuencia + "|" + dificultad.getTiempoTranscurrido()
             + "|" + gestorEnemigos.getEnemigosEliminados() + "|" + progreso.datosHud()
-            + sufijoResultado();
+            + sufijoResultado() + pausa.datosHud();
     }
 
     private String sufijoResultado() {
@@ -125,7 +126,21 @@ public class Partida {
     }
 
     public synchronized void elegirMejora(int id, String partidaId, int nivel, int revision, int opcion) {
-        progreso.elegirMejora(id, partidaId, nivel, revision, opcion);
+        if (!pausa.estaActiva()) {
+            progreso.elegirMejora(id, partidaId, nivel, revision, opcion);
+        }
+    }
+
+    public synchronized void gestionarPausa(int id, String partidaId, int revision, boolean reanudar) {
+        if (resultado != null || obtenerJugador(id) == null || !progreso.correspondeAPartida(partidaId)) {
+            return;
+        }
+        if (reanudar) {
+            pausa.confirmar(id, revision);
+        } else if (pausa.abrir(id, revision)) {
+            jugador1.establecerMovimiento(0f, 0f);
+            jugador2.establecerMovimiento(0f, 0f);
+        }
     }
 
     public String crearMensajePersonajes() {
