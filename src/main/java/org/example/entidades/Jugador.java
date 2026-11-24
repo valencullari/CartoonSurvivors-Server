@@ -101,9 +101,9 @@ public class Jugador {
         posicionX += direccionX * velocidad * delta;
         posicionY += direccionY * velocidad * delta;
 
-        posicionX = Math.max(0, Math.min(12060, posicionX));
+        posicionX = Math.max(0, Math.min(12090, posicionX));
 
-        posicionY = Math.max(0, Math.min(12140, posicionY));
+        posicionY = Math.max(0, Math.min(12080, posicionY));
         curar(regeneracion * delta);
     }
 

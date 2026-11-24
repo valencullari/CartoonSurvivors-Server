@@ -4,7 +4,7 @@ public class DificultadPartida {
 
     private static final int INICIO_FASE_FINAL = 600;
     private static final int DURACION_ETAPA = 60;
-    private static final float DANIO_EXTRA_POR_ETAPA = 0.12f;
+    private static final float DANIO_EXTRA_POR_ETAPA = 0.14f;
 
     private static final Etapa[] ETAPAS = {
             new Etapa(3.2f, 10, 450, 0, 0, 3),

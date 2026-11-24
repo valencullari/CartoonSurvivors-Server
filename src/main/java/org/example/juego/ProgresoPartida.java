@@ -99,11 +99,11 @@ final class ProgresoPartida {
         }
         var azar = ThreadLocalRandom.current();
         candidatas.add(opcionPersonal("VELOCIDAD", sortearPorcentaje(azar), jugador::aumentarVelocidad));
-        int vida = azar.nextInt(10, 31);
+        int vida = azar.nextInt(10, 21);
         candidatas.add(new Opcion("VIDA_MAXIMA:" + vida + ":" + (jugador.getNivelVidaMaxima() + 1),
                 () -> jugador.aumentarVidaMaxima(vida)));
         candidatas.add(opcionPersonal("REGENERACION", 1, jugador::aumentarRegeneracion));
-        int armadura = Math.min(sortearPorcentaje(azar), jugador.getMargenArmadura());
+        int armadura = Math.min(sortearPorcentajeArmadura(azar), jugador.getMargenArmadura());
         if (armadura > 0) {
             candidatas.add(opcionPersonal("ARMADURA", armadura, jugador::aumentarArmadura));
         }
@@ -149,6 +149,10 @@ final class ProgresoPartida {
 
     private int sortearPorcentaje(ThreadLocalRandom azar) {
         return azar.nextInt(AUMENTO_MINIMO_PORCENTUAL, AUMENTO_MAXIMO_PORCENTUAL + 1);
+    }
+
+    private int sortearPorcentajeArmadura(ThreadLocalRandom azar) {
+        return azar.nextInt(AUMENTO_MINIMO_PORCENTUAL, AUMENTO_MAXIMO_PORCENTUAL + -3);
     }
 
     private Opcion opcionPersonal(String tipo, int valor, IntConsumer aplicar) {
