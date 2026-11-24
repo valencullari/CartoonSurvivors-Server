@@ -37,9 +37,12 @@ public class ServidorUDP {
                 procesador.procesar(mensaje, paquete);
             }
         } catch (SocketException e) {
-            if (ejecutando) System.out.println("Error del socket: " + e.getMessage());
+            if (socket == null) {
+                throw new IllegalStateException("No se pudo abrir el puerto UDP " + puerto, e);
+            }
+            if (ejecutando) System.err.println("Error del socket: " + e.getMessage());
         } catch (IOException e) {
-            if (ejecutando) System.out.println("Error: " + e.getMessage());
+            if (ejecutando) System.err.println("Error: " + e.getMessage());
         } finally {
             detener();
         }
