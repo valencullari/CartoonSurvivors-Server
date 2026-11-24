@@ -17,9 +17,14 @@ public class GestorEnemigos {
     private final AtaqueFuego ataqueFuego = new AtaqueFuego();
     private final List<Bala> balas = new ArrayList<>();
     private int enemigosEliminados;
+    private int experienciaPorBajas;
 
     public int getEnemigosEliminados() {
         return enemigosEliminados;
+    }
+
+    public int getExperienciaPorBajas() {
+        return experienciaPorBajas;
     }
     private int siguienteId;
 
@@ -40,7 +45,7 @@ public class GestorEnemigos {
     public void actualizar(float delta, Jugador jugador1, Jugador jugador2) {
 
         ataqueFuego.actualizar(delta, jugador1, jugador2);
-        balas.removeIf(bala -> !bala.actualizar(delta));
+        balas.removeIf(bala -> !bala.actualizar(delta, enemigos));
 
         // 1. Eliminar muertos y actualizar movimiento.
         for (int i = enemigos.size() - 1; i >= 0; i--) {
@@ -50,6 +55,11 @@ public class GestorEnemigos {
             if (!enemigo.estaVivo()) {
                 enemigos.remove(i);
                 enemigosEliminados++;
+                experienciaPorBajas += switch (enemigo.getTipo()) {
+                    case VIOLETA -> 2;
+                    case JEFE -> 30;
+                    default -> 1;
+                };
                 continue;
             }
 
@@ -67,8 +77,8 @@ public class GestorEnemigos {
         resolverColisionesEntreEnemigos();
     }
 
-    public void dispararBala(float x, float y, Enemigo objetivo, float danio) {
-        balas.add(new Bala(x, y, objetivo, danio));
+    public void dispararBala(float x, float y, Enemigo objetivo, float danio, int rebotes, float retencionDanio) {
+        balas.add(new Bala(x, y, objetivo, danio, rebotes, retencionDanio));
     }
 
     void agregarEstadoBalas(List<String> entradas) {

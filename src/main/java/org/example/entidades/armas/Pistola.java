@@ -12,7 +12,11 @@ public class Pistola extends Arma {
     private static final float ALCANCE = 260f;
     // Coseno de 60 grados respecto del lado al que mira el personaje.
     private static final float LIMITE_CONO_FRONTAL = 0.5f;
+    private static final int PERDIDA_MINIMA_REBOTE = 5;
+    private static final int MEJORA_RETENCION_REBOTE = 5;
     private int proyectiles = 1;
+    private int rebotes = 1;
+    private int perdidaPorRebote = 25;
 
     public Pistola() {
         super(15, 0.85f);
@@ -22,8 +26,7 @@ public class Pistola extends Arma {
     protected boolean atacar(Jugador jugador, GestorEnemigos gestorEnemigos) {
         float origenX = jugador.getPosicionX() + jugador.getAnchoHitbox() / 2f;
         float origenY = jugador.getPosicionY() + jugador.getAltoHitbox() / 2f;
-        float alcance = ALCANCE * getAlcanceAtaque();
-        float alcanceCuadrado = alcance * alcance;
+        float alcanceCuadrado = ALCANCE * ALCANCE;
         int lado = jugador.getLadoMirada();
         List<Objetivo> objetivos = new ArrayList<>();
 
@@ -49,13 +52,23 @@ public class Pistola extends Arma {
         for (int i = 0; i < proyectiles; i++) {
             float separacion = (i - (proyectiles - 1) / 2f) * 10f;
             Enemigo objetivo = objetivos.get(i % blancos).enemigo();
-            gestorEnemigos.dispararBala(origenX, origenY + separacion, objetivo, jugador.calcularDanio(getDanio()));
+            gestorEnemigos.dispararBala(origenX, origenY + separacion, objetivo, jugador.calcularDanio(getDanio()),
+                rebotes, (100 - perdidaPorRebote) / 100f);
         }
         return true;
     }
 
     public void agregarProyectil() {
         proyectiles++;
+    }
+
+    public int mejoraRetencionDisponible() {
+        return Math.min(MEJORA_RETENCION_REBOTE, perdidaPorRebote - PERDIDA_MINIMA_REBOTE);
+    }
+
+    public void mejorarRebote(int mejoraRetencion) {
+        rebotes++;
+        perdidaPorRebote -= Math.min(mejoraRetencion, mejoraRetencionDisponible());
     }
 
     @Override

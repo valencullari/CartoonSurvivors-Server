@@ -72,19 +72,15 @@ public class Partida {
         } else {
             generadorEnemigos.actualizar(delta, jugador1, jugador2);
         }
-        int bajasAnteriores = gestorEnemigos.getEnemigosEliminados();
-        boolean jugador1Vivo = jugador1.estaVivo();
-        boolean jugador2Vivo = jugador2.estaVivo();
+        int experienciaAnterior = gestorEnemigos.getExperienciaPorBajas();
         gestorEnemigos.actualizar(delta, jugador1, jugador2);
         jugador1.actualizarArmas(delta, gestorEnemigos);
         jugador2.actualizarArmas(delta, gestorEnemigos);
         sistemaColisiones.actualizar(delta, jugador1, jugador2, gestorEnemigos);
-        if (faseFinal && ((jugador1Vivo && !jugador1.estaVivo()) || (jugador2Vivo && !jugador2.estaVivo()))) {
-            resultado = "VICTORIA";
-        } else if (!jugador1.estaVivo() && !jugador2.estaVivo()) {
-            resultado = "DERROTA";
+        if (!jugador1.estaVivo() && !jugador2.estaVivo()) {
+            resultado = faseFinal ? "VICTORIA" : "DERROTA";
         } else if (!faseFinal) {
-            progreso.agregarExperiencia(gestorEnemigos.getEnemigosEliminados() - bajasAnteriores);
+            progreso.agregarExperiencia(gestorEnemigos.getExperienciaPorBajas() - experienciaAnterior);
         }
 
         if (progreso.estaEnPausa()) {

@@ -121,15 +121,25 @@ final class ProgresoPartida {
         var azar = ThreadLocalRandom.current();
         int principal = azar.nextInt(3);
         int danio = sortearAtributo(principal == 0, azar);
-        int alcance = sortearAtributo(principal == 1, azar);
+        boolean atributoSecundario = principal == 1 || azar.nextInt(100) < 30;
         int intervalo = sortearAtributo(principal == 2, azar);
-        String codigo = arma.getTipo() + ":" + danio + ":" + alcance + ":" + intervalo;
-        if (arma instanceof Pistola pistola && azar.nextInt(100) < PROBABILIDAD_BALA_EXTRA) {
-            return new Opcion(codigo + ":1", () -> {
-                pistola.mejorar(danio, alcance, intervalo);
-                pistola.agregarProyectil();
+        if (arma instanceof Pistola pistola) {
+            int rebote = atributoSecundario ? 1 : 0;
+            int retencion = atributoSecundario ? pistola.mejoraRetencionDisponible() : 0;
+            int balaExtra = azar.nextInt(100) < PROBABILIDAD_BALA_EXTRA ? 1 : 0;
+            String codigo = "PISTOLA:" + danio + ":" + rebote + ":" + intervalo + ":" + retencion + ":" + balaExtra;
+            return new Opcion(codigo, () -> {
+                pistola.mejorar(danio, 0, intervalo);
+                if (rebote > 0) {
+                    pistola.mejorarRebote(retencion);
+                }
+                if (balaExtra > 0) {
+                    pistola.agregarProyectil();
+                }
             });
         }
+        int alcance = atributoSecundario ? sortearPorcentaje(azar) : 0;
+        String codigo = arma.getTipo() + ":" + danio + ":" + alcance + ":" + intervalo;
         return new Opcion(codigo, () -> arma.mejorar(danio, alcance, intervalo));
     }
 
@@ -146,7 +156,7 @@ final class ProgresoPartida {
     }
 
     private int experienciaNecesaria() {
-        return 5 + (nivel - 1) * 3;
+        return 5 + Math.min(nivel - 1, 3) * 3 + Math.max(0, nivel - 4) * 2;
     }
 
     String datosHud() {
