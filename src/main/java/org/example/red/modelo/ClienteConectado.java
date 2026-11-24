@@ -14,6 +14,15 @@ public class ClienteConectado {
     private boolean conectado;
     private boolean listo;
     private String personajeSeleccionado;
+    private String mapaSeleccionado = "MAPA1";
+
+    public String getMapaSeleccionado() {
+        return mapaSeleccionado;
+    }
+
+    public void setMapaSeleccionado(String mapaSeleccionado) {
+        this.mapaSeleccionado = mapaSeleccionado;
+    }
 
     public ClienteConectado(
             int id,

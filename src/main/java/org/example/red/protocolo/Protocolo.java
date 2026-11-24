@@ -28,6 +28,7 @@ public final class Protocolo {
     public static final String NO_LISTO = "NO_LISTO";
     public static final String PERSONAJE = "PERSONAJE";
     public static final String PERSONAJES = "PERSONAJES";
+    public static final String MAPA = "MAPA";
     public static final String EMPIEZA = "EMPIEZA";
 
 

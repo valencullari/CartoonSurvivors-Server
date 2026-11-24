@@ -2,7 +2,7 @@ package org.example.juego;
 
 public class DificultadPartida {
 
-    private static final int INICIO_FASE_FINAL = 600;
+    private static final int INICIO_FASE_FINAL = 30;
     private static final int DURACION_ETAPA = 60;
 
     private static final Etapa[] ETAPAS = {

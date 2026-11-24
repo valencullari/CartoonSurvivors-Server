@@ -1,4 +1,3 @@
-
 package org.example.juego;
 
 import java.util.concurrent.Executors;
@@ -9,8 +8,7 @@ public class BucleJuego {
 
     private static final int ACTUALIZACIONES_POR_SEGUNDO = 60;
 
-    private static final long INTERVALO_NANOSEGUNDOS =
-            1_000_000_000L / ACTUALIZACIONES_POR_SEGUNDO;
+    private static final long INTERVALO_NANOSEGUNDOS = 1_000_000_000L / ACTUALIZACIONES_POR_SEGUNDO;
 
     private final Partida partida;
 
@@ -31,17 +29,12 @@ public class BucleJuego {
 
         ultimaActualizacion = System.nanoTime();
 
-        ejecutor.scheduleAtFixedRate(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        actualizar();
-                    }
-                },
-                0,
-                INTERVALO_NANOSEGUNDOS,
-                TimeUnit.NANOSECONDS
-        );
+        ejecutor.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                actualizar();
+            }
+        }, 0, INTERVALO_NANOSEGUNDOS, TimeUnit.NANOSECONDS);
 
         System.out.println("Bucle iniciado a 60 TPS.");
     }
@@ -50,9 +43,7 @@ public class BucleJuego {
 
         long tiempoActual = System.nanoTime();
 
-        float delta =
-                (tiempoActual - ultimaActualizacion)
-                        / 1_000_000_000f;
+        float delta = (tiempoActual - ultimaActualizacion) / 1_000_000_000f;
 
         ultimaActualizacion = tiempoActual;
 
@@ -62,10 +53,7 @@ public class BucleJuego {
             partida.actualizar(delta);
 
         } catch (Exception e) {
-            System.out.println(
-                    "Error actualizando partida: "
-                            + e.getMessage()
-            );
+            System.out.println("Error actualizando partida: " + e.getMessage());
         }
     }
 

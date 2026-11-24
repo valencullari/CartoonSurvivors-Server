@@ -41,6 +41,14 @@ public class ProcesadorMensajes {
                 else System.out.println("Formato de seleccion de personaje invalido.");
                 return;
             }
+            if (mensaje.startsWith(Protocolo.MAPA + "|")) {
+                lobby.seleccionarMapa(ip, puerto, mensaje.substring(Protocolo.MAPA.length() + 1));
+                return;
+            }
+            if (mensaje.startsWith(Protocolo.LISTO + "|")) {
+                lobby.marcarListo(ip, puerto, mensaje.substring(Protocolo.LISTO.length() + 1));
+                return;
+            }
             if (mensaje.startsWith(Protocolo.MOVER + "|")) {
                 movimiento.procesar(mensaje, ip, puerto);
                 return;
@@ -63,10 +71,11 @@ public class ProcesadorMensajes {
                     if (cliente != null) {
                         cliente.actualizarActividad();
                         emisor.enviarACliente(Protocolo.KEEP_ALIVE_OK, ip, puerto);
+                        lobby.sincronizarMapa(cliente);
                     }
                     break;
                 case Protocolo.LISTO:
-                    lobby.marcarListo(ip, puerto);
+                    lobby.marcarListo(ip, puerto, null);
                     break;
                 case Protocolo.NO_LISTO:
                     lobby.desmarcarListo(ip, puerto);

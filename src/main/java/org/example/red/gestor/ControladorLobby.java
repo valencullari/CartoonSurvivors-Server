@@ -42,6 +42,7 @@ public class ControladorLobby {
         if (conexiones.partidaCompleta()) {
             estado.establecerEstado(EstadoPartida.LOBBY);
             emisor.enviarATodos(Protocolo.JUGADOR_CONECTADO);
+            sincronizarMapa(cliente);
         }
     }
 
@@ -60,10 +61,43 @@ public class ControladorLobby {
         notificarPersonajes();
     }
 
-    public void marcarListo(InetAddress ip, int puerto) {
+    public void seleccionarMapa(InetAddress ip, int puerto, String mapa) {
+        EstadoPartida actual = estado.getEstado();
+        if (actual != EstadoPartida.ESPERANDO_JUGADORES && actual != EstadoPartida.LOBBY) return;
+        ClienteConectado cliente = conexiones.buscarCliente(ip, puerto);
+        if (cliente == null || cliente.isListo() || !seleccionValida(cliente, mapa)) return;
+        cliente.setMapaSeleccionado(mapa);
+        cliente.actualizarActividad();
+        emisor.enviarATodos(Protocolo.MAPA + "|" + mapa);
+    }
+
+    private boolean seleccionValida(ClienteConectado cliente, String mapa) {
+        return cliente.getId() == 1 && ("MAPA1".equals(mapa) || "MAPA2".equals(mapa));
+    }
+
+    public void sincronizarMapa(ClienteConectado cliente) {
+        ClienteConectado anfitrion = conexiones.buscarCliente(1);
+        if (anfitrion == null) return;
+
+        EstadoPartida actual = estado.getEstado();
+        if (actual == EstadoPartida.EN_CURSO) {
+            emisor.enviarACliente(Protocolo.EMPIEZA + "|" + anfitrion.getMapaSeleccionado(),
+                    cliente.getDireccionIP(), cliente.getPuerto());
+        } else if (actual == EstadoPartida.LOBBY && cliente.getId() != 1) {
+            emisor.enviarACliente(Protocolo.MAPA + "|" + anfitrion.getMapaSeleccionado(),
+                    cliente.getDireccionIP(), cliente.getPuerto());
+        }
+    }
+
+    public void marcarListo(InetAddress ip, int puerto, String mapa) {
         if (estado.getEstado() != EstadoPartida.LOBBY) return;
         ClienteConectado cliente = conexiones.buscarCliente(ip, puerto);
         if (cliente == null || cliente.getPersonajeSeleccionado() == null) return;
+        if (mapa != null) {
+            if (cliente.isListo() || !seleccionValida(cliente, mapa)) return;
+            cliente.setMapaSeleccionado(mapa);
+            emisor.enviarATodos(Protocolo.MAPA + "|" + mapa);
+        }
         boolean todosListos = lobby.marcarListo(cliente.getId());
         emisor.enviarATodos(Protocolo.JUGADOR_LISTO);
         if (!todosListos) return;
@@ -75,7 +109,7 @@ public class ControladorLobby {
         partida.iniciarPartida(uno.getPersonajeSeleccionado(), dos.getPersonajeSeleccionado());
         estado.establecerEstado(EstadoPartida.EN_CURSO);
         notificarPersonajes();
-        emisor.enviarATodos(Protocolo.EMPIEZA);
+        emisor.enviarATodos(Protocolo.EMPIEZA + "|" + uno.getMapaSeleccionado());
         estados.iniciar();
     }
 
