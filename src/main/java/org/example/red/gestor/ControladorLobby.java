@@ -37,8 +37,13 @@ public class ControladorLobby {
             emisor.enviarACliente(Protocolo.SERVIDOR_LLENO, ip, puerto);
             return;
         }
-        emisor.enviarACliente(cliente.getId() == 1 ? Protocolo.JUGADOR_1 : Protocolo.JUGADOR_2,
-                ip, puerto);
+        String mensajeJugador;
+        if (cliente.getId() == 1) {
+            mensajeJugador = Protocolo.JUGADOR_1;
+        } else {
+            mensajeJugador = Protocolo.JUGADOR_2;
+        }
+        emisor.enviarACliente(mensajeJugador, ip, puerto);
         if (conexiones.partidaCompleta()) {
             estado.establecerEstado(EstadoPartida.LOBBY);
             emisor.enviarATodos(Protocolo.JUGADOR_CONECTADO);
@@ -123,8 +128,12 @@ public class ControladorLobby {
         StringBuilder mensaje = new StringBuilder(Protocolo.PERSONAJES);
         for (ClienteConectado cliente : conexiones.getClientes()) {
             String seleccionado = cliente.getPersonajeSeleccionado();
-            mensaje.append('|').append(cliente.getId()).append(':')
-                    .append(seleccionado == null ? "NINGUNO" : seleccionado);
+            mensaje.append('|').append(cliente.getId()).append(':');
+            if (seleccionado == null) {
+                mensaje.append("NINGUNO");
+            } else {
+                mensaje.append(seleccionado);
+            }
         }
         emisor.enviarATodos(mensaje.toString());
     }

@@ -61,11 +61,17 @@ public class GestorEnemigos {
             if (!enemigo.estaVivo()) {
                 enemigos.remove(i);
                 enemigosEliminados++;
-                experienciaPorBajas += switch (enemigo.getTipo()) {
-                    case VIOLETA -> 2;
-                    case JEFE -> 30;
-                    default -> 1;
-                };
+                switch (enemigo.getTipo()) {
+                    case VIOLETA:
+                        experienciaPorBajas += 2;
+                        break;
+                    case JEFE:
+                        experienciaPorBajas += 30;
+                        break;
+                    default:
+                        experienciaPorBajas++;
+                        break;
+                }
                 continue;
             }
 
@@ -145,7 +151,12 @@ public class GestorEnemigos {
         // el menor desplazamiento.
         if (superposicionX < superposicionY) {
 
-            float direccion = diferenciaX >= 0f ? 1f : -1f;
+            float direccion;
+            if (diferenciaX >= 0f) {
+                direccion = 1f;
+            } else {
+                direccion = -1f;
+            }
 
             float desplazamiento = (superposicionX + MARGEN_SEPARACION) / 2f;
 
@@ -155,7 +166,12 @@ public class GestorEnemigos {
 
         } else {
 
-            float direccion = diferenciaY >= 0f ? 1f : -1f;
+            float direccion;
+            if (diferenciaY >= 0f) {
+                direccion = 1f;
+            } else {
+                direccion = -1f;
+            }
 
             float desplazamiento = (superposicionY + MARGEN_SEPARACION) / 2f;
 

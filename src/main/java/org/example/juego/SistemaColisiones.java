@@ -62,7 +62,12 @@ public class SistemaColisiones {
         float superposicionY = (enemigo.getAltoHitbox() + jugador.getAltoHitbox()) / 2f - Math.abs(diferenciaY);
 
         if (superposicionX < superposicionY) {
-            float direccion = diferenciaX >= 0f ? 1f : -1f;
+            float direccion;
+            if (diferenciaX >= 0f) {
+                direccion = 1f;
+            } else {
+                direccion = -1f;
+            }
             enemigo.desplazarPorColision(direccion * (superposicionX + MARGEN_CONTACTO), 0f);
             if (!colisionan(enemigo, jugador)) {
                 enemigo.rebotarDesdeContacto(direccion, 0f);
@@ -71,7 +76,12 @@ public class SistemaColisiones {
         }
 
         // El borde del mapa puede bloquear la separación por la izquierda o por abajo.
-        float direccion = diferenciaY >= 0f ? 1f : -1f;
+        float direccion;
+        if (diferenciaY >= 0f) {
+            direccion = 1f;
+        } else {
+            direccion = -1f;
+        }
         enemigo.desplazarPorColision(0f, direccion * (superposicionY + MARGEN_CONTACTO));
         if (colisionan(enemigo, jugador)) {
             direccion = 1f;

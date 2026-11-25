@@ -46,9 +46,15 @@ final class PausaPartida {
 
     String datosHud() {
         long restante = milisegundosRestantes();
+        int solicitanteActivo = 0;
+        int confirmacionesActivas = 0;
+        if (restante > 0) {
+            solicitanteActivo = solicitante;
+            confirmacionesActivas = confirmaciones;
+        }
         return "|PAUSA:" + revision
-            + ":" + (restante > 0 ? solicitante : 0)
+            + ":" + solicitanteActivo
             + ":" + restante
-            + ":" + (restante > 0 ? confirmaciones : 0);
+            + ":" + confirmacionesActivas;
     }
 }

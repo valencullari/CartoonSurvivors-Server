@@ -42,14 +42,14 @@ public class GeneradorEnemigos {
 
         DificultadPartida.Etapa etapa = dificultad.getEtapa();
         int tiempo = dificultad.getTiempoTranscurrido();
-        if (tiempo >= siguienteJefe && gestorEnemigos.cantidadJefesVivos() < etapa.maximoJefes()) {
-            generarEnemigo(TipoEnemigo.JEFE, etapa.vidaExtraJefe(), jugador1, jugador2);
+        if (tiempo >= siguienteJefe && gestorEnemigos.cantidadJefesVivos() < etapa.getMaximoJefes()) {
+            generarEnemigo(TipoEnemigo.JEFE, etapa.getVidaExtraJefe(), jugador1, jugador2);
             siguienteJefe = tiempo + INTERVALO_JEFE;
         }
 
         tiempoAparicion += delta;
 
-        float intervalo = etapa.intervalo();
+        float intervalo = etapa.getIntervalo();
 
         if (tiempoAparicion < intervalo) {
             return;
@@ -57,9 +57,9 @@ public class GeneradorEnemigos {
 
         tiempoAparicion -= intervalo;
 
-        int maximo = etapa.maximo();
+        int maximo = etapa.getMaximo();
 
-        int cantidad = etapa.cantidad();
+        int cantidad = etapa.getCantidad();
 
         for (int i = 0; i < cantidad; i++) {
 
@@ -67,9 +67,13 @@ public class GeneradorEnemigos {
                 break;
             }
 
-            TipoEnemigo tipo = random.nextFloat() < PROBABILIDAD_VIOLETA
-                    ? TipoEnemigo.VIOLETA : TipoEnemigo.BASICO;
-            generarEnemigo(tipo, etapa.vidaExtraBasico(), jugador1, jugador2);
+            TipoEnemigo tipo;
+            if (random.nextFloat() < PROBABILIDAD_VIOLETA) {
+                tipo = TipoEnemigo.VIOLETA;
+            } else {
+                tipo = TipoEnemigo.BASICO;
+            }
+            generarEnemigo(tipo, etapa.getVidaExtraBasico(), jugador1, jugador2);
         }
     }
 
@@ -93,7 +97,11 @@ public class GeneradorEnemigos {
         }
 
         if (!referencia.estaVivo()) {
-            referencia = referencia == jugador1 ? jugador2 : jugador1;
+            if (referencia == jugador1) {
+                referencia = jugador2;
+            } else {
+                referencia = jugador1;
+            }
         }
 
         // Elegir una distancia aleatoria.

@@ -81,12 +81,18 @@ public class Enemigo {
     public Jugador elegirObjetivo(Jugador jugador1, Jugador jugador2) {
 
         if (!jugador1.estaVivo()) {
-            return jugador2.estaVivo() ? jugador2 : null;
+            if (jugador2.estaVivo()) {
+                return jugador2;
+            }
+            return null;
         }
         if (!jugador2.estaVivo()) {
             return jugador1;
         }
-        return calcularDistancia(jugador1) <= calcularDistancia(jugador2) ? jugador1 : jugador2;
+        if (calcularDistancia(jugador1) <= calcularDistancia(jugador2)) {
+            return jugador1;
+        }
+        return jugador2;
     }
 
     private float calcularDistancia(Jugador jugador) {
@@ -150,7 +156,11 @@ public class Enemigo {
         float distancia = (float) Math.sqrt(direccionX * direccionX + direccionY * direccionY);
 
         if (distancia < 0.001f) {
-            direccionX = id % 2 == 0 ? 1f : -1f;
+            if (id % 2 == 0) {
+                direccionX = 1f;
+            } else {
+                direccionX = -1f;
+            }
             direccionY = 0f;
         } else {
             direccionX /= distancia;

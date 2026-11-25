@@ -79,7 +79,11 @@ public class Partida {
         jugador2.actualizarArmas(delta, gestorEnemigos);
         sistemaColisiones.actualizar(delta, jugador1, jugador2, gestorEnemigos, multiplicadorDanio);
         if (!jugador1.estaVivo() && !jugador2.estaVivo()) {
-            resultado = faseFinal ? "VICTORIA" : "DERROTA";
+            if (faseFinal) {
+                resultado = "VICTORIA";
+            } else {
+                resultado = "DERROTA";
+            }
         } else if (!faseFinal) {
             progreso.agregarExperiencia(gestorEnemigos.getExperienciaPorBajas() - experienciaAnterior);
         }
@@ -119,7 +123,10 @@ public class Partida {
         if (resultado != null) {
             return "|" + resultado;
         }
-        return dificultad.estaEnFaseFinal() ? "|FASE_FINAL" : "";
+        if (dificultad.estaEnFaseFinal()) {
+            return "|FASE_FINAL";
+        }
+        return "";
     }
 
     public synchronized void elegirMejora(int id, String partidaId, int nivel, int revision, int opcion) {

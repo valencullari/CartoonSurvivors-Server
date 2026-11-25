@@ -56,11 +56,17 @@ public class GestorPartida {
     }
 
     public synchronized String obtenerEstadoHud(long secuencia) {
-        return partida == null ? null : partida.crearMensajeHud(secuencia);
+        if (partida == null) {
+            return null;
+        }
+        return partida.crearMensajeHud(secuencia);
     }
 
     public synchronized String obtenerPersonajes() {
-        return partida == null ? null : partida.crearMensajePersonajes();
+        if (partida == null) {
+            return null;
+        }
+        return partida.crearMensajePersonajes();
     }
 
     public synchronized List<String> obtenerEstadosEnemigos(

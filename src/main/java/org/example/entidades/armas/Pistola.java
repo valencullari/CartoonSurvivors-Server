@@ -50,13 +50,13 @@ public class Pistola extends Arma {
         objetivos.sort(new Comparator<Objetivo>() {
             @Override
             public int compare(Objetivo primero, Objetivo segundo) {
-                return Float.compare(primero.distanciaCuadrada(), segundo.distanciaCuadrada());
+                return Float.compare(primero.getDistanciaCuadrada(), segundo.getDistanciaCuadrada());
             }
         });
         int blancos = Math.min(proyectiles, objetivos.size());
         for (int i = 0; i < proyectiles; i++) {
             float separacion = (i - (proyectiles - 1) / 2f) * 10f;
-            Enemigo objetivo = objetivos.get(i % blancos).enemigo();
+            Enemigo objetivo = objetivos.get(i % blancos).getEnemigo();
             gestorEnemigos.dispararBala(origenX, origenY + separacion, objetivo, jugador.calcularDanio(getDanio()),
                 rebotes, (100 - perdidaPorRebote) / 100f);
         }
@@ -81,6 +81,21 @@ public class Pistola extends Arma {
         return "PISTOLA";
     }
 
-    private record Objetivo(Enemigo enemigo, float distanciaCuadrada) {
+    private static final class Objetivo {
+        private final Enemigo enemigo;
+        private final float distanciaCuadrada;
+
+        Objetivo(Enemigo enemigo, float distanciaCuadrada) {
+            this.enemigo = enemigo;
+            this.distanciaCuadrada = distanciaCuadrada;
+        }
+
+        public Enemigo getEnemigo() {
+            return enemigo;
+        }
+
+        public float getDistanciaCuadrada() {
+            return distanciaCuadrada;
+        }
     }
 }

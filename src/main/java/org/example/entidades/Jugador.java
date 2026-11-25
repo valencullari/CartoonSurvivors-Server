@@ -5,10 +5,11 @@ import org.example.entidades.armas.Espada;
 import org.example.entidades.armas.Pistola;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
 import org.example.juego.GestorEnemigos;
 
 public class Jugador {
+    private final Random azar = new Random();
 
     public static final int AUMENTO_CRITICO = 5;
     private static final int ARMADURA_MAXIMA = 50;
@@ -52,7 +53,11 @@ public class Jugador {
 
         vida = vidaMaxima;
 
-        agregarArma("MORDECAI".equals(personaje) ? new Pistola() : new Espada());
+        if ("MORDECAI".equals(personaje)) {
+            agregarArma(new Pistola());
+        } else {
+            agregarArma(new Espada());
+        }
 
         ultimoMovimiento = System.currentTimeMillis();
     }
@@ -80,7 +85,11 @@ public class Jugador {
         direccionX = x;
         direccionY = y;
         if (x != 0f) {
-            ladoMirada = x > 0f ? 1 : -1;
+            if (x > 0f) {
+                ladoMirada = 1;
+            } else {
+                ladoMirada = -1;
+            }
         }
 
         ultimoMovimiento = System.currentTimeMillis();
@@ -177,7 +186,11 @@ public class Jugador {
 
     public void desbloquearArma() {
         if (puedeDesbloquearArma()) {
-            agregarArma(armas.getFirst() instanceof Espada ? new Pistola() : new Espada());
+            if (armas.get(0) instanceof Espada) {
+                agregarArma(new Pistola());
+            } else {
+                agregarArma(new Espada());
+            }
         }
     }
 
@@ -212,7 +225,10 @@ public class Jugador {
     }
 
     public float calcularDanio(float danio) {
-        return ThreadLocalRandom.current().nextInt(100) < probabilidadCritico ? danio * 2f : danio;
+        if (azar.nextInt(100) < probabilidadCritico) {
+            return danio * 2f;
+        }
+        return danio;
     }
 
     private void curar(float cantidad) {
