@@ -43,20 +43,37 @@ final class AtaqueFuego {
     }
 
     void actualizar(float delta, Jugador jugador1, Jugador jugador2, float multiplicadorDanio) {
-        recargas.replaceAll((id, restante) -> restante - delta);
-        recargas.values().removeIf(restante -> restante <= 0f);
+        ArrayList<Integer> recargasTerminadas = new ArrayList<>();
+        for (int id : recargas.keySet()) {
+            float restante = recargas.get(id) - delta;
+            recargas.put(id, restante);
+            if (restante <= 0f) {
+                recargasTerminadas.add(id);
+            }
+        }
+        for (int id : recargasTerminadas) {
+            recargas.remove(id);
+        }
 
-        trayectorias.removeIf(trayectoria -> {
+        for (int i = 0; i < trayectorias.size();) {
+            Trayectoria trayectoria = trayectorias.get(i);
             trayectoria.avanzar(delta, circulos);
-            return trayectoria.termino();
-        });
+            if (trayectoria.termino()) {
+                trayectorias.remove(i);
+            } else {
+                i++;
+            }
+        }
 
         aplicarDanio(jugador1, delta, multiplicadorDanio);
         aplicarDanio(jugador2, delta, multiplicadorDanio);
-        circulos.removeIf(circulo -> {
+        for (int i = circulos.size() - 1; i >= 0; i--) {
+            Circulo circulo = circulos.get(i);
             circulo.tiempoRestante -= delta;
-            return circulo.tiempoRestante <= 0f;
-        });
+            if (circulo.tiempoRestante <= 0f) {
+                circulos.remove(i);
+            }
+        }
     }
 
     private void aplicarDanio(Jugador jugador, float delta, float multiplicadorDanio) {

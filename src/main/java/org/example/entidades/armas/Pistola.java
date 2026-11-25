@@ -47,7 +47,12 @@ public class Pistola extends Arma {
         if (objetivos.isEmpty()) {
             return false;
         }
-        objetivos.sort(Comparator.comparingDouble(Objetivo::distanciaCuadrada));
+        objetivos.sort(new Comparator<Objetivo>() {
+            @Override
+            public int compare(Objetivo primero, Objetivo segundo) {
+                return Float.compare(primero.distanciaCuadrada(), segundo.distanciaCuadrada());
+            }
+        });
         int blancos = Math.min(proyectiles, objetivos.size());
         for (int i = 0; i < proyectiles; i++) {
             float separacion = (i - (proyectiles - 1) / 2f) * 10f;

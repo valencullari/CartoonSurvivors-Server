@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.IntConsumer;
 
 final class ProgresoPartida {
     private static final float DURACION_MEJORAS = 10f;
@@ -17,7 +16,11 @@ final class ProgresoPartida {
     private static final int AUMENTO_MAXIMO_PORCENTUAL = 12;
     private static final int PROBABILIDAD_BALA_EXTRA = 3;
 
-    private record Opcion(String codigo, Runnable aplicar) {
+    private record Opcion(String tipo, String codigo, int valor, Arma arma, int alcance,
+                          int intervalo, int rebote, int retencion, int balaExtra) {
+        Opcion(String tipo, String codigo, int valor) {
+            this(tipo, codigo, valor, null, 0, 0, 0, 0, 0);
+        }
     }
 
     private final String partidaId = UUID.randomUUID().toString();
@@ -58,7 +61,8 @@ final class ProgresoPartida {
     private void finalizarRonda() {
         tiempoRestante = 0f;
         for (int i = 0; i < jugadores.size(); i++) {
-            opciones.get(i).get(Math.max(0, elecciones[i])).aplicar().run();
+            Opcion opcion = opciones.get(i).get(Math.max(0, elecciones[i]));
+            aplicarMejora(jugadores.get(i), opcion);
         }
         iniciarRondaSiCorresponde();
     }
@@ -86,7 +90,10 @@ final class ProgresoPartida {
 
         experiencia -= experienciaNecesaria();
         nivel++;
-        opciones = jugadores.stream().map(this::sortearOpciones).toList();
+        opciones = new ArrayList<>();
+        for (Jugador jugador : jugadores) {
+            opciones.add(sortearOpciones(jugador));
+        }
         elecciones[0] = elecciones[1] = -1;
         revisiones[0] = revisiones[1] = 0;
         tiempoRestante = DURACION_MEJORAS;
@@ -98,20 +105,19 @@ final class ProgresoPartida {
             candidatas.add(sortearMejoraArma(arma));
         }
         var azar = ThreadLocalRandom.current();
-        candidatas.add(opcionPersonal("VELOCIDAD", sortearPorcentaje(azar), jugador::aumentarVelocidad));
+        candidatas.add(opcionPersonal("VELOCIDAD", sortearPorcentaje(azar)));
         int vida = azar.nextInt(10, 21);
-        candidatas.add(new Opcion("VIDA_MAXIMA:" + vida + ":" + (jugador.getNivelVidaMaxima() + 1),
-                () -> jugador.aumentarVidaMaxima(vida)));
-        candidatas.add(opcionPersonal("REGENERACION", 1, jugador::aumentarRegeneracion));
+        candidatas.add(new Opcion("VIDA_MAXIMA", "VIDA_MAXIMA:" + vida + ":" + (jugador.getNivelVidaMaxima() + 1), vida));
+        candidatas.add(opcionPersonal("REGENERACION", 1));
         int armadura = Math.min(sortearPorcentajeArmadura(azar), jugador.getMargenArmadura());
         if (armadura > 0) {
-            candidatas.add(opcionPersonal("ARMADURA", armadura, jugador::aumentarArmadura));
+            candidatas.add(opcionPersonal("ARMADURA", armadura));
         }
         if (jugador.puedeAumentarCritico()) {
-            candidatas.add(opcionPersonal("CRITICO", Jugador.AUMENTO_CRITICO, jugador::aumentarCritico));
+            candidatas.add(opcionPersonal("CRITICO", Jugador.AUMENTO_CRITICO));
         }
         if (jugador.puedeDesbloquearArma()) {
-            candidatas.add(new Opcion("ARMA", jugador::desbloquearArma));
+            candidatas.add(new Opcion("ARMA", "ARMA", 0));
         }
         Collections.shuffle(candidatas);
         return candidatas.subList(0, 3);
@@ -128,19 +134,11 @@ final class ProgresoPartida {
             int retencion = atributoSecundario ? pistola.mejoraRetencionDisponible() : 0;
             int balaExtra = azar.nextInt(100) < PROBABILIDAD_BALA_EXTRA ? 1 : 0;
             String codigo = "PISTOLA:" + danio + ":" + rebote + ":" + intervalo + ":" + retencion + ":" + balaExtra;
-            return new Opcion(codigo, () -> {
-                pistola.mejorar(danio, 0, intervalo);
-                if (rebote > 0) {
-                    pistola.mejorarRebote(retencion);
-                }
-                if (balaExtra > 0) {
-                    pistola.agregarProyectil();
-                }
-            });
+            return new Opcion("PISTOLA", codigo, danio, pistola, 0, intervalo, rebote, retencion, balaExtra);
         }
         int alcance = atributoSecundario ? sortearPorcentaje(azar) : 0;
         String codigo = arma.getTipo() + ":" + danio + ":" + alcance + ":" + intervalo;
-        return new Opcion(codigo, () -> arma.mejorar(danio, alcance, intervalo));
+        return new Opcion(arma.getTipo(), codigo, danio, arma, alcance, intervalo, 0, 0, 0);
     }
 
     private int sortearAtributo(boolean principal, ThreadLocalRandom azar) {
@@ -155,8 +153,45 @@ final class ProgresoPartida {
         return azar.nextInt(AUMENTO_MINIMO_PORCENTUAL, AUMENTO_MAXIMO_PORCENTUAL + -3);
     }
 
-    private Opcion opcionPersonal(String tipo, int valor, IntConsumer aplicar) {
-        return new Opcion(tipo + ":" + valor, () -> aplicar.accept(valor));
+    private Opcion opcionPersonal(String tipo, int valor) {
+        return new Opcion(tipo, tipo + ":" + valor, valor);
+    }
+
+    private void aplicarMejora(Jugador jugador, Opcion opcion) {
+        int valor = opcion.valor();
+        if (opcion.arma() != null) {
+            opcion.arma().mejorar(valor, opcion.alcance(), opcion.intervalo());
+            if (opcion.arma() instanceof Pistola pistola) {
+                if (opcion.rebote() > 0) {
+                    pistola.mejorarRebote(opcion.retencion());
+                }
+                if (opcion.balaExtra() > 0) {
+                    pistola.agregarProyectil();
+                }
+            }
+            return;
+        }
+
+        switch (opcion.tipo()) {
+            case "VELOCIDAD":
+                jugador.aumentarVelocidad(valor);
+                break;
+            case "VIDA_MAXIMA":
+                jugador.aumentarVidaMaxima(valor);
+                break;
+            case "REGENERACION":
+                jugador.aumentarRegeneracion(valor);
+                break;
+            case "ARMADURA":
+                jugador.aumentarArmadura(valor);
+                break;
+            case "CRITICO":
+                jugador.aumentarCritico(valor);
+                break;
+            case "ARMA":
+                jugador.desbloquearArma();
+                break;
+        }
     }
 
     private int experienciaNecesaria() {
@@ -176,6 +211,10 @@ final class ProgresoPartida {
     }
 
     private String datosOpciones(List<Opcion> lista) {
-        return String.join(",", lista.stream().map(Opcion::codigo).toList());
+        ArrayList<String> codigos = new ArrayList<>();
+        for (Opcion opcion : lista) {
+            codigos.add(opcion.codigo());
+        }
+        return String.join(",", codigos);
     }
 }

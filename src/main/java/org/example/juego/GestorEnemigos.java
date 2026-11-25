@@ -45,7 +45,13 @@ public class GestorEnemigos {
     public void actualizar(float delta, Jugador jugador1, Jugador jugador2, float multiplicadorDanio) {
 
         ataqueFuego.actualizar(delta, jugador1, jugador2, multiplicadorDanio);
-        balas.removeIf(bala -> !bala.actualizar(delta, enemigos));
+        for (int i = 0; i < balas.size();) {
+            if (balas.get(i).actualizar(delta, enemigos)) {
+                i++;
+            } else {
+                balas.remove(i);
+            }
+        }
 
         // 1. Eliminar muertos y actualizar movimiento.
         for (int i = enemigos.size() - 1; i >= 0; i--) {
@@ -175,7 +181,13 @@ public class GestorEnemigos {
     }
 
     public long cantidadJefesVivos() {
-        return enemigos.stream().filter(enemigo -> enemigo.getTipo() == TipoEnemigo.JEFE && enemigo.estaVivo()).count();
+        long cantidad = 0;
+        for (Enemigo enemigo : enemigos) {
+            if (enemigo.getTipo() == TipoEnemigo.JEFE && enemigo.estaVivo()) {
+                cantidad++;
+            }
+        }
+        return cantidad;
     }
 
     AtaqueFuego getAtaqueFuego() {

@@ -23,7 +23,12 @@ public class EmisorEstados {
 
     public synchronized void iniciar() {
         if (hilo != null) return;
-        Thread nuevo = new Thread(this::bucle, "HiloEnvioEstados");
+        Thread nuevo = new Thread("HiloEnvioEstados") {
+            @Override
+            public void run() {
+                bucle();
+            }
+        };
         nuevo.setDaemon(true);
         hilo = nuevo;
         nuevo.start();

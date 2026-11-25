@@ -19,8 +19,8 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.compileJava {
-    options.release.set(21)
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }
 
 tasks.jar {

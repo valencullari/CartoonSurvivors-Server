@@ -25,7 +25,12 @@ public class MonitorDesconexiones {
     public synchronized void iniciar() {
         if (activo) return;
         activo = true;
-        hilo = new Thread(this::comprobar, "HiloControlDesconexiones");
+        hilo = new Thread("HiloControlDesconexiones") {
+            @Override
+            public void run() {
+                comprobar();
+            }
+        };
         hilo.setDaemon(true);
         hilo.start();
     }
